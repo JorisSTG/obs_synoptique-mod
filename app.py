@@ -127,10 +127,30 @@ if uploaded:
     st.dataframe(df_stats)
 
     # -------- Export CSV --------
-    df_rmse.to_csv("RMSE_percentiles.csv", index=False)
-    df_stats.to_csv("Heures_seuils.csv", index=False)
-    st.download_button("Télécharger RMSE", "RMSE_percentiles.csv", "text/csv")
-    st.download_button("Télécharger stats heures", "Heures_seuils.csv", "text/csv")
+    d
+    # -------- Export CSV et téléchargement --------
+    import io
+
+    # RMSE
+    csv_rmse = df_rmse.to_csv(index=False)
+    b_rmse = io.StringIO(csv_rmse)
+    st.download_button(
+        label="Télécharger RMSE",
+        data=b_rmse,
+        file_name="RMSE_percentiles.csv",
+        mime="text/csv"
+    )
+
+    # Statistiques heures sup/inf
+    csv_stats = df_stats.to_csv(index=False)
+    b_stats = io.StringIO(csv_stats)
+    st.download_button(
+        label="Télécharger stats heures",
+        data=b_stats,
+        file_name="Heures_seuils.csv",
+        mime="text/csv"
+    )
+
 
     # -------- Graphiques CDF et tableaux percentiles --------
     st.subheader("Fonctions de répartition mensuelles (CDF)")
