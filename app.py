@@ -43,8 +43,12 @@ if uploaded:
     df_obs.rename(columns={"T": "T", "time": "time"}, inplace=True)
     df_obs["year"] = df_obs["time"].dt.year
     df_obs["month"] = df_obs["time"].dt.month
+    df_obs["day"] = df_obs["time"].dt.day
 
-    # -------- RMSE mensuel avec tri sur 10 ans --------
+    # -------- Supprimer les 29 février --------
+    df_obs = df_obs[~((df_obs["month"] == 2) & (df_obs["day"] == 29))]
+
+    # -------- RMSE mensuel --------
     def rmse(a, b):
         return np.sqrt(np.mean((a - b) ** 2))
 
@@ -57,19 +61,14 @@ if uploaded:
 
         # Extraire toutes les valeurs observées du mois sur 10 ans
         obs_mois_10ans = []
-        for year in df_obs["year"].unique():
+        for year in sorted(df_obs["year"].unique()):
             obs_year_mois = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
-            if len(obs_year_mois) > 0:
-                obs_mois_10ans.append(np.sort(obs_year_mois))
+            obs_mois_10ans.append(np.sort(obs_year_mois))
 
-        # Trouver la longueur minimale pour aligner toutes les années
-        min_len = min(len(arr) for arr in obs_mois_10ans)
-        obs_mois_10ans_trim = np.array([arr[:min_len] for arr in obs_mois_10ans])
+        # Moyenne sur 10 ans position par position
+        obs_moyenne_tri = np.mean(obs_mois_10ans, axis=0)
 
-        # Moyenne sur 10 ans
-        obs_moyenne_tri = np.mean(obs_mois_10ans_trim, axis=0)
-
-        val_rmse = rmse(mod_sorted[:min_len], obs_moyenne_tri)
+        val_rmse = rmse(mod_sorted, obs_moyenne_tri)
         df_rmse.append({"Fichier_NetCDF": ville_sel, "Mois": mois, "RMSE": val_rmse})
 
         start_idx_model += nb_heures
@@ -84,7 +83,7 @@ if uploaded:
     for seuil in t_thresholds_list:
         for mois in range(1, 13):
             heures_par_mois = []
-            for year in df_obs["year"].unique():
+            for year in sorted(df_obs["year"].unique()):
                 obs_year_mois = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
                 heures_par_mois.append(np.sum(obs_year_mois > seuil))
             nb_heures_moy = np.mean(heures_par_mois)
