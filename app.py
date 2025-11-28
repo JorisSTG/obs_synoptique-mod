@@ -139,7 +139,8 @@ if uploaded:
         mod_mois = model_values[sum(heures_par_mois[:mois-1]):sum(heures_par_mois[:mois])]
 
         # Calcul 100 percentiles
-        obs_percentiles = np.percentile(obs_mois_10ans, np.linspace(0, 100, 100))
+        obs_mois_concat = obs_mois_10ans.flatten()  # concatène toutes les années pour le mois
+        obs_percentiles = np.percentile(obs_mois_concat, np.linspace(0, 100, 100))
         mod_percentiles = np.percentile(mod_mois, np.linspace(0, 100, 100))
 
         df_cdf = pd.DataFrame({
