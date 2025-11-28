@@ -6,7 +6,7 @@ import os
 import numpy as np
 import io
 
-st.title("Comparaison modèle CSV / Observations NetCDF")
+st.title("Comparaison modèle CSV / Observations NetCDF sur 10 ans")
 
 # -------- Paramètres --------
 base_folder = "obs"  # dossier contenant les fichiers NetCDF
@@ -14,7 +14,10 @@ heures_par_mois = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]  
 
 # -------- Liste des fichiers NetCDF --------
 nc_files = glob.glob(os.path.join(base_folder, "*.nc"))
-# Pour simplifier, on affiche le nom du fichier complet dans la liste déroulante
+if not nc_files:
+    st.error(f"Aucun fichier NetCDF trouvé dans {base_folder}")
+    st.stop()
+
 ville_sel = st.selectbox("Choisir le fichier NetCDF :", [os.path.basename(f) for f in nc_files])
 nc_file_sel = os.path.join(base_folder, ville_sel)
 
@@ -22,75 +25,83 @@ nc_file_sel = os.path.join(base_folder, ville_sel)
 uploaded = st.file_uploader("Dépose ton fichier CSV modèle (colonne unique T) :", type=["csv"])
 
 # -------- Seuils --------
-tmin_threshold = st.number_input("Seuil Tmin pour compter les heures supérieures (°C)", value=20)
-tmax_thresholds = st.text_input("Seuils Tmax pour compter les heures supérieures (°C, séparés par des virgules)", "25,30,35")
+t_thresholds = st.text_input("Seuils Tmax pour compter les heures supérieures (°C, séparés par des virgules)", "25,30,35")
 
 if uploaded:
     # Lecture du CSV modèle
-    model_values = pd.read_csv(uploaded, header=0).iloc[:,0].values
+    model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
 
     # Lecture NetCDF sélectionné
     ds_obs = xr.open_dataset(nc_file_sel)
-    if "T2m" in ds_obs:
-        obs_values = ds_obs["T2m"].values.flatten()
-    elif "T" in ds_obs:
-        obs_values = ds_obs["T"].values.flatten()
-    else:
-        st.error("Le NetCDF n'a pas de variable T ou T2m")
+    if "T" not in ds_obs:
+        st.error("Le NetCDF n'a pas de variable 'T'")
         st.stop()
+    obs_values = ds_obs["T"].values  # dimensions : (time,)
+    time_obs = ds_obs["T"].coords["time"].values
 
-    # Vérification longueur
-    if len(model_values) != len(obs_values):
-        st.warning(f"⚠ Longueur différente modèle / obs : {len(model_values)} vs {len(obs_values)}")
-        min_len = min(len(model_values), len(obs_values))
-        model_values = model_values[:min_len]
-        obs_values = obs_values[:min_len]
+    # Convertir en DataFrame avec année et mois
+    df_obs = pd.DataFrame({
+        "T": obs_values,
+        "time": pd.to_datetime(time_obs, unit='h', origin=pd.Timestamp("2010-01-01"))
+    })
+    df_obs["year"] = df_obs["time"].dt.year
+    df_obs["month"] = df_obs["time"].dt.month
 
-    # -------- RMSE mensuel --------
-    def rmse(a,b):
-        return np.sqrt(np.mean((a-b)**2))
+    # -------- RMSE mensuel avec tri sur 10 ans --------
+    def rmse(a, b):
+        return np.sqrt(np.mean((a - b) ** 2))
 
-    start_idx = 0
-    resultats = []
+    df_rmse = []
+    start_idx_model = 0
     for mois, nb_heures in enumerate(heures_par_mois, start=1):
-        end_idx = start_idx + nb_heures
-        mod_mois = model_values[start_idx:end_idx]
-        obs_mois = obs_values[start_idx:end_idx]
+        # Extraire les valeurs modèle pour ce mois
+        mod_mois = model_values[start_idx_model:start_idx_model + nb_heures]
+        mod_sorted = np.sort(mod_mois)
 
-        val_rmse = rmse(obs_mois, mod_mois)
-        resultats.append({
-            "Fichier_NetCDF": ville_sel,
-            "Mois": mois,
-            "RMSE": val_rmse
-        })
-        start_idx = end_idx
+        # Extraire les valeurs observées pour ce mois, toutes années
+        obs_mois_10ans = []
+        for year in df_obs["year"].unique():
+            obs_year_mois = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
+            obs_mois_10ans.append(np.sort(obs_year_mois))
 
-    df_rmse = pd.DataFrame(resultats)
+        # Convertir en array 2D (10 x nb_heures)
+        obs_mois_10ans = np.array(obs_mois_10ans)
+        # Moyenne sur les 10 ans position par position
+        obs_moyenne_tri = np.mean(obs_mois_10ans, axis=0)
+
+        val_rmse = rmse(mod_sorted, obs_moyenne_tri)
+        df_rmse.append({"Fichier_NetCDF": ville_sel, "Mois": mois, "RMSE": val_rmse})
+
+        start_idx_model += nb_heures
+
+    df_rmse = pd.DataFrame(df_rmse)
     st.subheader("RMSE mensuel")
     st.dataframe(df_rmse)
 
-    # -------- Nombre d'heures au-dessus ou en dessous des seuils --------
-    tmax_thresholds_list = [float(x.strip()) for x in tmax_thresholds.split(",")]
+    # -------- Nombre d'heures au-dessus d'un seuil --------
+    t_thresholds_list = [float(x.strip()) for x in t_thresholds.split(",")]
+    df_stats = []
+    for seuil in t_thresholds_list:
+        for mois in range(1, 13):
+            # compter heures par année
+            heures_par_mois_obs = []
+            for year in df_obs["year"].unique():
+                obs_year_mois = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
+                heures_sup = np.sum(obs_year_mois > seuil)
+                heures_par_mois_obs.append(heures_sup)
+            # Moyenne sur 10 ans
+            nb_heures_moy = np.mean(heures_par_mois_obs)
+            df_stats.append({"Fichier_NetCDF": ville_sel, "Mois": mois, "Seuil": seuil, "Nb_heures_moy": nb_heures_moy})
 
-    df_stats = pd.DataFrame({
-        "Seuil": [],
-        "Nb_heures_sup": [],
-        "Nb_heures_inf": []
-    })
-
-    for seuil in tmax_thresholds_list:
-        nb_sup = np.sum(model_values > seuil)
-        nb_inf = np.sum(model_values <= seuil)
-        df_stats = pd.concat([df_stats, pd.DataFrame([{"Seuil": seuil, "Nb_heures_sup": nb_sup, "Nb_heures_inf": nb_inf}])], ignore_index=True)
-
-    st.subheader("Nombre d'heures au-dessus ou en dessous des seuils")
+    df_stats = pd.DataFrame(df_stats)
+    st.subheader("Nombre moyen d'heures au-dessus des seuils par mois")
     st.dataframe(df_stats)
 
-    # -------- Export CSV --------
+    # -------- Export Excel --------
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df_rmse.to_excel(writer, sheet_name="RMSE_mensuel", index=False)
-        df_stats.to_excel(writer, sheet_name="Stats_seuils", index=False)
+        df_stats.to_excel(writer, sheet_name="Heures_seuils", index=False)
     output.seek(0)
 
     st.download_button(
