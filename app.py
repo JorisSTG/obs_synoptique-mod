@@ -4,7 +4,6 @@ import xarray as xr
 import glob
 import os
 import numpy as np
-import io
 
 st.title("Comparaison modèle CSV / Observations NetCDF sur 10 ans")
 
@@ -45,66 +44,74 @@ if uploaded:
     df_obs["month"] = df_obs["time"].dt.month
     df_obs["day"] = df_obs["time"].dt.day
 
-    # -------- Supprimer les 29 février --------
+    # Supprimer les 29 février
     df_obs = df_obs[~((df_obs["month"] == 2) & (df_obs["day"] == 29))]
 
-    # -------- RMSE mensuel --------
+    # -------- Calcul percentiles et RMSE --------
     def rmse(a, b):
-        return np.sqrt(np.mean((a - b) ** 2))
+        return np.sqrt(np.nanmean((a - b) ** 2))
 
-    df_rmse = []
+    results = []
+
     start_idx_model = 0
     for mois, nb_heures in enumerate(heures_par_mois, start=1):
-        # Extraire les valeurs modèle pour ce mois
+        # Extraction des valeurs modèle pour ce mois
         mod_mois = model_values[start_idx_model:start_idx_model + nb_heures]
         mod_sorted = np.sort(mod_mois)
 
-        # Extraire toutes les valeurs observées du mois sur 10 ans
+        # Extraction des valeurs observées pour ce mois sur 10 ans
         obs_mois_10ans = []
         for year in sorted(df_obs["year"].unique()):
-            obs_year_mois = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
-            obs_mois_10ans.append(np.sort(obs_year_mois))
+            vals = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
+            obs_mois_10ans.append(np.sort(vals))
+        
+        # Alignement sur la longueur minimale
+        min_len = min(len(mod_sorted), min(len(arr) for arr in obs_mois_10ans))
+        obs_mois_trimmed = np.array([arr[:min_len] for arr in obs_mois_10ans])
+        obs_moyenne = np.mean(obs_mois_trimmed, axis=0)
 
-        # Moyenne sur 10 ans position par position
-        obs_moyenne_tri = np.mean(obs_mois_10ans, axis=0)
-
-        # Aligner la longueur avec le modèle si besoin
-        n = min(len(mod_sorted), len(obs_moyenne_tri))
-        val_rmse = rmse(mod_sorted[:n], obs_moyenne_tri[:n])
-        df_rmse.append({"Fichier_NetCDF": ville_sel, "Mois": mois, "RMSE": val_rmse})
+        val_rmse = rmse(mod_sorted[:min_len], obs_moyenne)
+        results.append({"Mois": mois, "RMSE_percentiles": val_rmse})
 
         start_idx_model += nb_heures
 
-    df_rmse = pd.DataFrame(df_rmse)
-    st.subheader("RMSE mensuel")
+    df_rmse = pd.DataFrame(results)
+    st.subheader("RMSE sur les percentiles mensuels")
     st.dataframe(df_rmse)
 
     # -------- Nombre moyen d'heures au-dessus d'un seuil --------
     t_thresholds_list = [float(x.strip()) for x in t_thresholds.split(",")]
-    df_stats = []
+    stats = []
+
     for seuil in t_thresholds_list:
         for mois in range(1, 13):
-            heures_par_mois = []
+            heures_mois = []
             for year in sorted(df_obs["year"].unique()):
-                obs_year_mois = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
-                heures_par_mois.append(np.sum(obs_year_mois > seuil))
-            nb_heures_moy = np.mean(heures_par_mois)
-            df_stats.append({"Fichier_NetCDF": ville_sel, "Mois": mois, "Seuil": seuil, "Nb_heures_moy": nb_heures_moy})
+                vals = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
+                heures_mois.append(np.sum(vals > seuil))
+            stats.append({"Mois": mois, "Seuil": seuil, "Nb_heures_moy": np.mean(heures_mois)})
 
-    df_stats = pd.DataFrame(df_stats)
-    st.subheader("Nombre moyen d'heures au-dessus des seuils par mois")
+    df_stats = pd.DataFrame(stats)
+    st.subheader("Nombre moyen d'heures au-dessus des seuils")
     st.dataframe(df_stats)
 
-    # -------- Export Excel --------
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df_rmse.to_excel(writer, sheet_name="RMSE_mensuel", index=False)
-        df_stats.to_excel(writer, sheet_name="Heures_seuils", index=False)
-    output.seek(0)
+    # -------- Export CSV --------
+    df_rmse.to_csv("RMSE_percentiles.csv", index=False)
+    df_stats.to_csv("Heures_au_dessus_seuils.csv", index=False)
 
-    st.download_button(
-        label="Télécharger les résultats en Excel",
-        data=output,
-        file_name=f"resultats_{ville_sel}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    st.download_button("Télécharger RMSE", "RMSE_percentiles.csv", "text/csv")
+    st.download_button("Télécharger stats heures", "Heures_au_dessus_seuils.csv", "text/csv")
+
+    # -------- Graphique CDF --------
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(8,5))
+    for mois in [1,2,3,4,5,6,7,8,9,10,11,12]:  # exemple: janvier, juillet, décembre
+        obs_concat = np.concatenate([arr for arr in obs_mois_10ans])
+        obs_sorted = np.sort(obs_concat)
+        mod_sorted_month = np.sort(model_values[sum(heures_par_mois[:mois-1]):sum(heures_par_mois[:mois])])
+        plt.plot(obs_sorted, np.linspace(0,1,len(obs_sorted)), label=f"Obs mois {mois}")
+        plt.plot(mod_sorted_month, np.linspace(0,1,len(mod_sorted_month)), '--', label=f"Modèle mois {mois}")
+    plt.xlabel("Température")
+    plt.ylabel("CDF")
+    plt.legend()
+    st.pyplot(plt)
