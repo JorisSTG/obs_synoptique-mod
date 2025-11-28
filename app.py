@@ -9,7 +9,7 @@ import io
 st.title("Comparaison modèle CSV / Observations NetCDF")
 
 # -------- Paramètres --------
-base_folder = "netcdf_by_scenario"  # dossier contenant les fichiers NetCDF
+base_folder = "obs"  # dossier contenant les fichiers NetCDF
 heures_par_mois = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]  # année non bissextile
 
 # -------- Liste des fichiers NetCDF --------
