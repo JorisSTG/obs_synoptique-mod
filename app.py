@@ -5,11 +5,12 @@ import glob
 import os
 import numpy as np
 
-st.title("Comparaison modèle / Observations sur 10 ans (01/01/2010 - 31/12/2019)")
+st.title("Comparaison modèle / Observations sur 10 ans (2010-2019)")
 
 # -------- Paramètres --------
 base_folder = "obs"  # dossier contenant les fichiers NetCDF
 heures_par_mois = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]  # année non bissextile
+percentiles_list = [1, 5, 10, 50, 90, 95, 99]
 
 # -------- Liste des fichiers NetCDF --------
 nc_files = glob.glob(os.path.join(base_folder, "*.nc"))
@@ -131,47 +132,30 @@ if uploaded:
     st.download_button("Télécharger RMSE", "RMSE_percentiles.csv", "text/csv")
     st.download_button("Télécharger stats heures", "Heures_seuils.csv", "text/csv")
 
-    # -------- Graphiques CDF (100 percentiles) --------
-    st.subheader("Fonctions de répartition mensuelles (CDF)")
+    # -------- Graphiques CDF et tableaux percentiles --------
+    st.subheader("Fonctions de répartition mensuelles (CDF) et Percentiles")
+
+    df_percentiles_all = []
 
     for mois in range(1, 13):
         obs_mois_10ans = obs_mois_all[mois-1]
         mod_mois = model_values[sum(heures_par_mois[:mois-1]):sum(heures_par_mois[:mois])]
 
-        # Calcul 100 percentiles
-        obs_mois_concat = obs_mois_10ans.flatten()  # concatène toutes les années pour le mois
-        obs_percentiles = np.percentile(obs_mois_concat, np.linspace(0, 100, 100))
-        mod_percentiles = np.percentile(mod_mois, np.linspace(0, 100, 100))
-
-        df_cdf = pd.DataFrame({
-            "Obs": obs_percentiles,
-            "Mod": mod_percentiles
-        })
-
-        st.write(f"Mois {mois}")
-        st.line_chart(df_cdf)
-        percentiles_list = [1, 5, 10, 50, 90, 95, 99]
-
-    for mois in range(1, 13):
-        obs_mois_10ans = obs_mois_all[mois-1]
-        mod_mois = model_values[sum(heures_par_mois[:mois-1]):sum(heures_par_mois[:mois])]
-
-    # CDF
         obs_concat = obs_mois_10ans.flatten()
-        obs_percentiles = np.percentile(obs_concat, np.linspace(0, 100, 100))
-        mod_percentiles = np.percentile(mod_mois, np.linspace(0, 100, 100))
+        obs_percentiles_100 = np.percentile(obs_concat, np.linspace(0, 100, 100))
+        mod_percentiles_100 = np.percentile(mod_mois, np.linspace(0, 100, 100))
 
+        # Graphique CDF
         df_cdf = pd.DataFrame({
-            "Obs": obs_percentiles,
-            "Mod": mod_percentiles
+            "Obs": obs_percentiles_100,
+            "Mod": mod_percentiles_100
         })
         st.write(f"Mois {mois} - Fonction de répartition")
         st.line_chart(df_cdf)
 
-    # -------- Tableau des percentiles spécifiques --------
+        # Tableau percentiles
         obs_p = np.percentile(obs_concat, percentiles_list)
         mod_p = np.percentile(mod_mois, percentiles_list)
-
         df_p = pd.DataFrame({
             "Percentile": [f"P{p}" for p in percentiles_list],
             "Obs_10ans": obs_p,
@@ -179,6 +163,36 @@ if uploaded:
         })
         st.write(f"Mois {mois} - Percentiles")
         st.dataframe(df_p)
+
+        # Stockage pour tableau bilan
+        for i, p in enumerate(percentiles_list):
+            df_percentiles_all.append({
+                "Mois": mois,
+                "Percentile": f"P{p}",
+                "Obs_10ans": obs_p[i],
+                "Mod": mod_p[i]
+            })
+
+    # -------- Tableau bilan (plus chaud / plus froid) --------
+    st.subheader("Bilan modèle vs Observations (chaud/froid)")
+    df_bilan = pd.DataFrame(df_percentiles_all)
+    # Création d'une colonne écart
+    df_bilan["Ecart"] = df_bilan["Mod"] - df_bilan["Obs_10ans"]
+
+    # Pivot pour avoir Mois x Percentile
+    df_bilan_pivot = df_bilan.pivot(index="Percentile", columns="Mois", values="Ecart")
+
+    # Coloration: bleu (froid), rouge (chaud)
+    def color_map(val):
+        if pd.isna(val):
+            return ""
+        # Gradient simple
+        if val < 0:
+            return f"background-color: rgba(0,0,255,{min(abs(val)/5,1)})"
+        else:
+            return f"background-color: rgba(255,0,0,{min(val/5,1)})"
+
+    st.dataframe(df_bilan_pivot.style.applymap(color_map))
 
 
         
