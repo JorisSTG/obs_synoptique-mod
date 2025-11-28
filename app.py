@@ -150,3 +150,35 @@ if uploaded:
 
         st.write(f"Mois {mois}")
         st.line_chart(df_cdf)
+        percentiles_list = [1, 5, 10, 50, 90, 95, 99]
+
+    for mois in range(1, 13):
+        obs_mois_10ans = obs_mois_all[mois-1]
+        mod_mois = model_values[sum(heures_par_mois[:mois-1]):sum(heures_par_mois[:mois])]
+
+    # CDF
+        obs_concat = obs_mois_10ans.flatten()
+        obs_percentiles = np.percentile(obs_concat, np.linspace(0, 100, 100))
+        mod_percentiles = np.percentile(mod_mois, np.linspace(0, 100, 100))
+
+        df_cdf = pd.DataFrame({
+            "Obs": obs_percentiles,
+            "Mod": mod_percentiles
+        })
+        st.write(f"Mois {mois} - Fonction de répartition")
+        st.line_chart(df_cdf)
+
+    # -------- Tableau des percentiles spécifiques --------
+        obs_p = np.percentile(obs_concat, percentiles_list)
+        mod_p = np.percentile(mod_mois, percentiles_list)
+
+        df_p = pd.DataFrame({
+            "Percentile": [f"P{p}" for p in percentiles_list],
+            "Obs_10ans": obs_p,
+            "Mod": mod_p
+        })
+        st.write(f"Mois {mois} - Percentiles")
+        st.dataframe(df_p)
+
+
+        
