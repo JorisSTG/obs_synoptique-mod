@@ -28,16 +28,15 @@ t_sup_thresholds = st.text_input("Seuils Tmax sup (°C, séparés par des virgul
 t_inf_thresholds = st.text_input("Seuils Tmin inf (°C, séparés par des virgules)", "0,5,10")
 
 if uploaded:
-    # Lecture du CSV modèle
+    # Lecture CSV modèle
     model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
 
-    # Lecture NetCDF sélectionné
+    # Lecture NetCDF
     ds_obs = xr.open_dataset(nc_file_sel, decode_times=True)
     if "T" not in ds_obs:
         st.error("Le NetCDF n'a pas de variable 'T'")
         st.stop()
 
-    # Conversion en DataFrame
     obs_series = ds_obs["T"].to_series()
     df_obs = obs_series.reset_index()
     df_obs.rename(columns={"T": "T", "time": "time"}, inplace=True)
@@ -53,8 +52,8 @@ if uploaded:
         return np.sqrt(np.nanmean((a - b) ** 2))
 
     results_rmse = []
-    start_idx_model = 0
     obs_mois_all = []
+    start_idx_model = 0
 
     for mois, nb_heures in enumerate(heures_par_mois, start=1):
         # Modèle pour ce mois
@@ -66,26 +65,26 @@ if uploaded:
         for year in sorted(df_obs["year"].unique()):
             vals = df_obs[(df_obs["year"] == year) & (df_obs["month"] == mois)]["T"].values
             obs_mois_10ans.append(np.sort(vals))
+        obs_mois_10ans = np.array(obs_mois_10ans)
+        obs_mois_all.append(obs_mois_10ans)
 
-        # Moyenne sur 10 ans
-        min_len = min(len(mod_sorted), min(len(arr) for arr in obs_mois_10ans))
-        obs_mois_trimmed = np.array([arr[:min_len] for arr in obs_mois_10ans])
+        # Moyenne sur 10 ans pour le percentile
+        min_len = min(len(mod_sorted), obs_mois_10ans.shape[1])
+        obs_mois_trimmed = obs_mois_10ans[:, :min_len]
         obs_moyenne = np.mean(obs_mois_trimmed, axis=0)
 
         val_rmse = rmse(mod_sorted[:min_len], obs_moyenne)
         results_rmse.append({"Mois": mois, "RMSE_percentiles": val_rmse})
 
-        obs_mois_all.append(obs_mois_trimmed)
         start_idx_model += nb_heures
 
     df_rmse = pd.DataFrame(results_rmse)
     st.subheader("RMSE sur les percentiles mensuels")
     st.dataframe(df_rmse)
 
-    # -------- Nombre moyen d'heures au-dessus / en dessous des seuils --------
+    # -------- Nombre moyen d'heures sup/inf et écart obs-mod --------
     t_sup_thresholds_list = [float(x.strip()) for x in t_sup_thresholds.split(",")]
     t_inf_thresholds_list = [float(x.strip()) for x in t_inf_thresholds.split(",")]
-
     stats = []
 
     for mois, nb_heures in enumerate(heures_par_mois, start=1):
@@ -94,7 +93,7 @@ if uploaded:
 
         # Heures supérieures
         for seuil in t_sup_thresholds_list:
-            heures_obs = [np.sum(arr > seuil)/10 for arr in obs_mois_10ans]  # moyenne par an
+            heures_obs = np.sum(obs_mois_10ans > seuil, axis=1)  # sum par année
             nb_heures_obs_moy = np.mean(heures_obs)
             nb_heures_mod = np.sum(mod_mois > seuil)
             ecart = nb_heures_obs_moy - nb_heures_mod
@@ -109,7 +108,7 @@ if uploaded:
 
         # Heures inférieures
         for seuil in t_inf_thresholds_list:
-            heures_obs = [np.sum(arr < seuil)/10 for arr in obs_mois_10ans]  # moyenne par an
+            heures_obs = np.sum(obs_mois_10ans < seuil, axis=1)  # sum par année
             nb_heures_obs_moy = np.mean(heures_obs)
             nb_heures_mod = np.sum(mod_mois < seuil)
             ecart = nb_heures_obs_moy - nb_heures_mod
@@ -129,22 +128,24 @@ if uploaded:
     # -------- Export CSV --------
     df_rmse.to_csv("RMSE_percentiles.csv", index=False)
     df_stats.to_csv("Heures_seuils.csv", index=False)
-
     st.download_button("Télécharger RMSE", "RMSE_percentiles.csv", "text/csv")
     st.download_button("Télécharger stats heures", "Heures_seuils.csv", "text/csv")
 
-    # -------- Graphiques CDF pour chaque mois --------
+    # -------- Graphiques CDF (100 percentiles) --------
     st.subheader("Fonctions de répartition mensuelles (CDF)")
 
     for mois in range(1, 13):
-        obs_mois_concat = np.concatenate(obs_mois_all[mois-1])
+        obs_mois_10ans = obs_mois_all[mois-1]
         mod_mois = model_values[sum(heures_par_mois[:mois-1]):sum(heures_par_mois[:mois])]
+
+        # Calcul 100 percentiles
+        obs_percentiles = np.percentile(obs_mois_10ans, np.linspace(0, 100, 100))
+        mod_percentiles = np.percentile(mod_mois, np.linspace(0, 100, 100))
+
         df_cdf = pd.DataFrame({
-            "Obs": np.sort(obs_mois_concat),
-            "Mod": np.sort(mod_mois)
+            "Obs": obs_percentiles,
+            "Mod": mod_percentiles
         })
-        # On normalise pour obtenir CDF
-        df_cdf["Obs_CDF"] = np.linspace(0, 1, len(df_cdf))
-        df_cdf["Mod_CDF"] = np.linspace(0, 1, len(df_cdf))
+
         st.write(f"Mois {mois}")
-        st.line_chart(df_cdf[["Obs_CDF", "Mod_CDF"]])
+        st.line_chart(df_cdf)
