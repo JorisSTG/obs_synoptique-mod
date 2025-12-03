@@ -72,7 +72,7 @@ if uploaded:
     model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
 
     # Lecture NetCDF
-    nc_file_sel = os.path.join(base_folder, scenario_sel, f"{ville_sel}.nc")
+    nc_file_sel = os.path.join(base_folder, f"{ville_sel}.nc")
     ds_obs = xr.open_dataset(nc_file_sel, decode_times=True)
     obs_series = ds_obs["T2m"].to_series()
     df_obs = obs_series.reset_index()
@@ -219,7 +219,7 @@ if uploaded:
 
 
     # -------- Histogrammes par plage de température --------
-    st.subheader(f"Histogrammes horaire : Modèle et Observations +{scenario_sel}/{ville_sel}")
+    st.subheader(f"Histogrammes horaire : Modèle et Observations {ville_sel}")
     st.markdown(
         """
         La valeur de chaque barre est égal au total d'heure compris entre [ X°C , X+1°C [
@@ -257,7 +257,7 @@ if uploaded:
         
         # Création du plot
         fig, ax = plt.subplots(figsize=(14, 4))
-        ax.bar(df_plot["Temp_Num"] - 0.2, df_plot["Observations"], width=0.4, label=f"Observations +{scenario_sel}/{ville_sel}", color="blue")
+        ax.bar(df_plot["Temp_Num"] - 0.2, df_plot["Observations"], width=0.4, label=f"Observations {ville_sel}", color="blue")
         ax.bar(df_plot["Temp_Num"] + 0.2, df_plot["Modèle"], width=0.4, label="Modèle", color="red")
         ax.set_title(f"{mois} - Durée en heure par seuil de température")
         ax.set_xlabel("Température (°C)")
@@ -296,7 +296,7 @@ if uploaded:
         .background_gradient(subset=["Précision (%)"], cmap="RdYlGn", vmin=vminP, vmax=vmaxP, axis=None) \
         .format({"Précision (%)": "{:.2f}", "RMSE (heure)": "{:.2f}"})
 
-    st.subheader(f"Précision du modèle sur la répartition des durées des plages de température (Observations +{scenario_sel}/{ville_sel})")
+    st.subheader(f"Précision du modèle sur la répartition des durées des plages de température (Observations {ville_sel})")
     st.markdown(
         """
         Le RMSE correspond à la moyenne de l’écart absolu entre les valeurs du modèle et celles de la Observations pour chaque intervalle de température.
@@ -355,7 +355,7 @@ if uploaded:
     ax.plot(df_tstats["Mois"], df_tstats["Observations_Tm"], color="white", label="Observations Tmoy", linestyle="--")
     ax.plot(df_tstats["Mois"], df_tstats["Observations_Tn"], color="cyan", label="Observations Tn", linestyle="--")
 
-    ax.set_title(f"Tn_mois / Tmoy_mois / Tx_mois – Modèle vs Observations +{scenario_sel}/{ville_sel}")
+    ax.set_title(f"Tn_mois / Tmoy_mois / Tx_mois – Modèle vs Observations {ville_sel}")
     ax.set_ylabel("Température (°C)")
     ax.tick_params(axis='x', rotation=45)
     ax.legend(facecolor="black")
@@ -478,7 +478,7 @@ if uploaded:
         ax.plot(pct_for_cdf, obs_tn_cdf, linestyle="--", linewidth=1.7, label="Observations Tn", color=colors["Tn"])
     
         # Mise en forme
-        ax.set_title(f"{mois} — CDF Tn_jour / Tmoy_jour / Tx_jour (Modèle vs Observations +{scenario_sel}/{ville_sel})", color="white")
+        ax.set_title(f"{mois} — CDF Tn_jour / Tmoy_jour / Tx_jour (Modèle vs Observations {ville_sel})", color="white")
         ax.set_xlabel("Percentile", color="white")
         ax.set_ylabel("Température (°C)", color="white")
         ax.tick_params(colors="white")
@@ -710,7 +710,7 @@ if uploaded:
         )
         i+=1
     
-    ax.set_title(f"Percentiles {percentiles_list} – Modèle vs Observations +{scenario_sel}/{ville_sel}")
+    ax.set_title(f"Percentiles {percentiles_list} – Modèle vs Observations {ville_sel}")
     ax.set_ylabel("Température (°C)")
     ax.tick_params(axis="x", rotation=45)
     ax.legend(ncol=2, facecolor="black")
@@ -731,7 +731,7 @@ if uploaded:
 
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.plot(np.linspace(0, 100, 100), mod_percentiles_100, label="Modèle", color="red")
-        ax.plot(np.linspace(0, 100, 100), obs_percentiles_100, label=f"Observations +{scenario_sel}/{ville_sel}", color="blue")
+        ax.plot(np.linspace(0, 100, 100), obs_percentiles_100, label=f"Observations {ville_sel}", color="blue")
         ax.set_title(f"{mois} - Fonction de répartition", color="white")
         ax.set_xlabel("Percentile", color="white")
         ax.set_ylabel("Température (°C)", color="white")
@@ -745,7 +745,7 @@ if uploaded:
         mod_p = np.percentile(mod_mois, percentiles_list)
         df_p = pd.DataFrame({
             "Percentile": [f"P{p}" for p in percentiles_list],
-            f"Observations +{scenario_sel}/{ville_sel}": obs_p,
+            f"Observations {ville_sel}": obs_p,
             "Modèle": mod_p
         }).round(2)
         st.write(f"{mois} - Percentiles")
@@ -759,7 +759,7 @@ if uploaded:
                 "Mod": mod_p[i]
             })
 
-    st.subheader(f"Bilan modèle vs Observations +{scenario_sel}/{ville_sel} (Modèle - Observations)") 
+    st.subheader(f"Bilan modèle vs Observations {ville_sel} (Modèle - Observations)") 
     # Création du DataFrame
     df_bilan = pd.DataFrame(df_percentiles_all).round(2)
     df_bilan["Ecart"] = df_bilan["Mod"] - df_bilan["Obs"]
