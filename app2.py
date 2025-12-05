@@ -22,23 +22,22 @@ plt.rcParams.update({
 # -------------------------------------------------------------------
 # TITRE + DESCRIPTION
 # -------------------------------------------------------------------
-
 st.title("Comparaison : Modèle / Observations")
 
-st.markdown(
-    """
-    Cet outil permet de comparer un **modèle (CSV)** avec plusieurs types de données de référence :
+st.markdown("""
+L’objectif de cette application est de comparer un **modèle (CSV, 1 an)** avec des données d'observation sur **une seule année**, afin de faciliter les calculs et analyses.  
 
-    - **obs2010_2019** : observations réelles (2010–2019)  
-    - **obs2000_2009** : observations réelles (2000–2009)  
-    - **typique** : année type  
-    """
-)
+Trois types de données de référence sont disponibles :  
+- **obs** : observations 2010–2019  
+- **obs2000_2009** : observations 2000–2009  
+- **typique** : année type  
+
+Cet outil est principalement utilisé dans le domaine du bâtiment, notamment pour l’évaluation thermique à travers des modèles de simulation dynamique (STD).
+""")
 
 # -------------------------------------------------------------------
-# PARAMÈTRES DÉJÀ EXISTANTS (conservés intégralement)
+# PARAMÈTRES DÉJÀ EXISTANTS
 # -------------------------------------------------------------------
-
 heures_par_mois = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]
 percentiles_list = [10, 25, 50, 75, 90]
 
@@ -66,19 +65,14 @@ mois_noms = {
 }
 
 # -------------------------------------------------------------------
-# 1) Sélection du type d'observation (3 dossiers au même niveau)
+# 1) Sélection du type d'observation
 # -------------------------------------------------------------------
-
 type_sel = st.selectbox(
     "Choisir le type de données d'observation :",
     ["obs", "obs2000_2009", "typique"]
 )
 
-# Ici pas de sous-dossier ! Le dossier choisi est directement celui qui contient les NC
 base_folder = type_sel
-
-
-base_folder = os.path.join("obs", type_sel)
 
 if not os.path.isdir(base_folder):
     st.error(f"⚠️ Le dossier {base_folder} est introuvable.")
@@ -87,7 +81,6 @@ if not os.path.isdir(base_folder):
 # -------------------------------------------------------------------
 # 2) Liste automatique des villes disponibles
 # -------------------------------------------------------------------
-
 nc_files = [f for f in os.listdir(base_folder) if f.endswith(".nc")]
 
 if len(nc_files) == 0:
@@ -101,45 +94,61 @@ ville_sel = st.selectbox("Choisir la ville :", ville_list)
 # -------------------------------------------------------------------
 # 3) Upload CSV modèle
 # -------------------------------------------------------------------
-
 uploaded = st.file_uploader(
-    "Déposer le fichier CSV du modèle (colonne unique T°C – 8760 valeurs attendues) :",
+    "Déposer le fichier CSV du modèle (8760 valeurs horaires) :",
     type=["csv"]
 )
 
 if uploaded:
 
-    # -------------------------------------------------------------------
-    # LECTURE DU CSV MODÈLE
-    # -------------------------------------------------------------------
+    # Lecture CSV modèle
     model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
 
     if len(model_values) != 8760:
-        st.warning(f"⚠️ Le fichier contient {len(model_values)} valeurs. Une année standard = 8760 valeurs.")
+        st.warning(f"⚠️ Le fichier CSV contient {len(model_values)} valeurs. Une année complète = 8760 valeurs.")
 
     # -------------------------------------------------------------------
-    # LECTURE DES OBSERVATIONS (NC)
+    # 4) Lecture du fichier NetCDF de la ville
     # -------------------------------------------------------------------
-
     nc_path = os.path.join(base_folder, f"{ville_sel}.nc")
-
-    if not os.path.isfile(nc_path):
-        st.error(f"⚠️ Fichier introuvable : {nc_path}")
-        st.stop()
-
     ds_obs = xr.open_dataset(nc_path, decode_times=True)
 
     if "T2m" not in ds_obs:
         st.error("⚠️ La variable 'T2m' est absente du fichier NetCDF.")
         st.stop()
 
-    obs_series = ds_obs["T2m"].to_series()
+    times = ds_obs["time"].to_series()
+    T = ds_obs["T2m"].to_series()
 
-    df_obs = obs_series.reset_index()
+    # -------------------------------------------------------------------
+    # 5) Extraction des années disponibles
+    # -------------------------------------------------------------------
+    annees_dispo = sorted(times.dt.year.unique())
+
+    if type_sel != "typique":
+        annee_sel = st.selectbox("Sélectionner une année :", annees_dispo)
+        mask = times.dt.year == annee_sel
+        obs_time = times[mask]
+        obs_temp = T[mask].values
+    else:
+        annee_sel = "Année typique"
+        obs_time = times
+        obs_temp = T.values
+
+    # -------------------------------------------------------------------
+    # 6) Création DataFrame OBS (1 an)
+    # -------------------------------------------------------------------
+    df_obs = pd.DataFrame({
+        "time": obs_time,
+        "T2m": obs_temp
+    })
+
     df_obs["year"] = df_obs["time"].dt.year
-    df_obs["month_num"] = df_obs["time"].dt.month
-    df_obs["month"] = df_obs["month_num"].map(mois_noms)
+    df_obs["month"] = df_obs["time"].dt.month
     df_obs["day"] = df_obs["time"].dt.day
+    df_obs["month_name"] = df_obs["month"].map(mois_noms)
+
+    st.success(f"✔ Données chargées : {ville_sel} – {annee_sel}")
 
 
     # -------- RMSE --------
