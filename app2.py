@@ -19,46 +19,43 @@ plt.rcParams.update({
     "text.color": "#FFFFFF",
 })
 
+# -------------------------------------------------------------------
+# TITRE + DESCRIPTION
+# -------------------------------------------------------------------
 
-st.title("Comparaison : Modèle / TRACC")
+st.title("Comparaison : Modèle / Observations")
 
 st.markdown(
     """
+    Cet outil permet de comparer un **modèle (CSV)** avec plusieurs types de données de référence :
 
-    L’objectif de cette application est d’évaluer la précision de données météorologiques en les comparant à des données de référence, afin de juger de leur pertinence pour les projections climatiques futures en France. Ces données de référence correspondent aux jeux TRACC, issus de différentes méthodes de génération d’années types.
-    Les comparaisons sont réalisées entre les projections climatiques TRACC — constituées d’années types dans un climat à +X °C, avec ou sans vague de chaleur — et les données issues du « modèle », fournies sous forme d’un fichier CSV contenant uniquement la température, soit une série de 1 × 8760 valeurs.
-    Cet outil est principalement utilisé dans le domaine du bâtiment, notamment pour l’évaluation thermique à travers des modèles de simulation dynamique (STD).
-
-    https://data.ademe.fr/datasets/?q=tracc&topics=fJZXrdcRGP
-    
-    **Note sur les couleurs :**  
-    - Les couleurs visent à caractériser le **MODÈLE** (données issues du fichier `.csv`).  
-    - Rouge → Modèle plus chaud que TRACC  
-    - Bleu → Modèle plus froid que TRACC  
-    - Pour les indicateurs de précision : vert → bon résultat, rouge → moins bon résultat
-    """,
-    unsafe_allow_html=True
+    - **obs2010_2019** : observations réelles (2010–2019)  
+    - **obs2000_2009** : observations réelles (2000–2009)  
+    - **typique** : année type  
+    """
 )
 
-# -------- Paramètres --------
-scenarios = ["2", "2_VC", "2-7", "2-7_VC", "4", "4_VC"]
-villes = ["AGEN", "CARPENTRAS", "MACON", "MARIGNANE", "NANCY", "RENNES", "TOURS", "TRAPPES"]
+# -------------------------------------------------------------------
+# PARAMÈTRES DÉJÀ EXISTANTS (conservés intégralement)
+# -------------------------------------------------------------------
+
 heures_par_mois = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]
 percentiles_list = [10, 25, 50, 75, 90]
 
 couleur_modele = "goldenrod"
 couleur_TRACC = "lightgray"
-vmaxT=5
-vminT=-5
 
-vmaxP=100
-vminP=50
+vmaxT = 5
+vminT = -5
 
-vmaxH=100
-vminH=-100
+vmaxP = 100
+vminP = 50
 
-vmaxDJU=150
-vminDJU=-150
+vmaxH = 100
+vminH = -100
+
+vmaxDJU = 150
+vminDJU = -150
 
 # -------- Noms des mois --------
 mois_noms = {
@@ -68,30 +65,82 @@ mois_noms = {
     10: "10 - Octobre", 11: "11 - Novembre", 12: "12 - Décembre"
 }
 
-# -------- Choix scénario et ville --------
-scenario_sel = st.selectbox("Choisir le scénario :", scenarios)
-ville_sel = st.selectbox("Choisir la ville :", villes)
-base_folder = "ADEME"
+# -------------------------------------------------------------------
+# 1) Sélection du type d'observation (3 dossiers au même niveau)
+# -------------------------------------------------------------------
 
-# -------- Upload CSV modèle --------
-uploaded = st.file_uploader("Déposer le fichier CSV du modèle (colonne unique T°C) :", type=["csv"])
+type_sel = st.selectbox(
+    "Choisir le type de données d'observation :",
+    ["obs", "obs2000_2009", "typique"]
+)
+
+# Ici pas de sous-dossier ! Le dossier choisi est directement celui qui contient les NC
+base_folder = type_sel
+
+
+base_folder = os.path.join("obs", type_sel)
+
+if not os.path.isdir(base_folder):
+    st.error(f"⚠️ Le dossier {base_folder} est introuvable.")
+    st.stop()
+
+# -------------------------------------------------------------------
+# 2) Liste automatique des villes disponibles
+# -------------------------------------------------------------------
+
+nc_files = [f for f in os.listdir(base_folder) if f.endswith(".nc")]
+
+if len(nc_files) == 0:
+    st.error("⚠️ Aucun fichier NetCDF trouvé dans ce dossier.")
+    st.stop()
+
+ville_list = [f.replace(".nc", "") for f in nc_files]
+
+ville_sel = st.selectbox("Choisir la ville :", ville_list)
+
+# -------------------------------------------------------------------
+# 3) Upload CSV modèle
+# -------------------------------------------------------------------
+
+uploaded = st.file_uploader(
+    "Déposer le fichier CSV du modèle (colonne unique T°C – 8760 valeurs attendues) :",
+    type=["csv"]
+)
 
 if uploaded:
 
-    st.markdown("")
-    
-    # Lecture CSV modèle
+    # -------------------------------------------------------------------
+    # LECTURE DU CSV MODÈLE
+    # -------------------------------------------------------------------
     model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
 
-    # Lecture NetCDF
-    nc_file_sel = os.path.join(base_folder, scenario_sel, f"{ville_sel}.nc")
-    ds_obs = xr.open_dataset(nc_file_sel, decode_times=True)
+    if len(model_values) != 8760:
+        st.warning(f"⚠️ Le fichier contient {len(model_values)} valeurs. Une année standard = 8760 valeurs.")
+
+    # -------------------------------------------------------------------
+    # LECTURE DES OBSERVATIONS (NC)
+    # -------------------------------------------------------------------
+
+    nc_path = os.path.join(base_folder, f"{ville_sel}.nc")
+
+    if not os.path.isfile(nc_path):
+        st.error(f"⚠️ Fichier introuvable : {nc_path}")
+        st.stop()
+
+    ds_obs = xr.open_dataset(nc_path, decode_times=True)
+
+    if "T2m" not in ds_obs:
+        st.error("⚠️ La variable 'T2m' est absente du fichier NetCDF.")
+        st.stop()
+
     obs_series = ds_obs["T2m"].to_series()
+
     df_obs = obs_series.reset_index()
     df_obs["year"] = df_obs["time"].dt.year
     df_obs["month_num"] = df_obs["time"].dt.month
     df_obs["month"] = df_obs["month_num"].map(mois_noms)
     df_obs["day"] = df_obs["time"].dt.day
+
 
     # -------- RMSE --------
     def rmse(a, b):
