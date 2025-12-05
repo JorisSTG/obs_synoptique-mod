@@ -233,7 +233,7 @@ if uploaded:
 
 
     # -------- Histogrammes par plage de température --------
-    st.subheader(f"Histogrammes horaire : Modèle et TRACC +{scenario_sel}/{ville_sel}")
+    st.subheader(f"Histogrammes horaire : Modèle et TRACC {ville_sel}")
     st.markdown(
         """
         La valeur de chaque barre est égal au total d'heure compris entre [ X°C , X+1°C [
@@ -271,7 +271,7 @@ if uploaded:
         
         # Création du plot
         fig, ax = plt.subplots(figsize=(14, 4))
-        ax.bar(df_plot["Temp_Num"] - 0.25, df_plot["TRACC"], width=0.5, label=f"TRACC +{scenario_sel}/{ville_sel}", color=couleur_TRACC)
+        ax.bar(df_plot["Temp_Num"] - 0.25, df_plot["TRACC"], width=0.5, label=f"TRACC {ville_sel}", color=couleur_TRACC)
         ax.bar(df_plot["Temp_Num"] + 0.25, df_plot["Modèle"], width=0.5, label="Modèle", color=couleur_modele)
         ax.set_title(f"{mois} - Durée en heure par seuil de température")
         ax.set_xlabel("Température (°C)")
@@ -281,7 +281,7 @@ if uploaded:
         plt.close(fig)
 
     # -------- Histogramme annuel par plage de température --------
-    st.subheader(f"Histogramme annuel : Modèle et TRACC +{scenario_sel}/{ville_sel}")
+    st.subheader(f"Histogramme annuel : Modèle et TRACC {ville_sel}")
     st.markdown(
         """
         La valeur de chaque barre est égale au total d'heures compris entre [ X°C , X+1°C [
@@ -323,7 +323,7 @@ if uploaded:
     # Plot
     fig, ax = plt.subplots(figsize=(16, 5))
     ax.bar(df_plot_year["Temp_Num"] - 0.25, df_plot_year["TRACC"], width=0.5,
-           label=f"TRACC +{scenario_sel}/{ville_sel}", color=couleur_TRACC)
+           label=f"TRACC {ville_sel}", color=couleur_TRACC)
     ax.bar(df_plot_year["Temp_Num"] + 0.25, df_plot_year["Modèle"], width=0.5,
            label="Modèle", color=couleur_modele)
 
@@ -435,7 +435,7 @@ if uploaded:
         .background_gradient(subset=["Précision (%)"], cmap="RdYlGn", vmin=vminP, vmax=vmaxP, axis=None) \
         .format({"Précision (%)": "{:.2f}", "RMSE (heure)": "{:.2f}"})
 
-    st.subheader(f"Précision du modèle sur la répartition des durées des plages de température (TRACC +{scenario_sel}/{ville_sel})")
+    st.subheader(f"Précision du modèle sur la répartition des durées des plages de température (TRACC {ville_sel})")
     st.markdown(
         """
         Le RMSE correspond à la moyenne de l’écart absolu entre les valeurs du modèle et celles de la TRACC pour chaque intervalle de température.
@@ -494,7 +494,7 @@ if uploaded:
     ax.plot(df_tstats["Mois"], df_tstats["TRACC_Tm"], color="white", label="TRACC Tmoy", linestyle="--")
     ax.plot(df_tstats["Mois"], df_tstats["TRACC_Tn"], color="cyan", label="TRACC Tn", linestyle="--")
 
-    ax.set_title(f"Tn_mois / Tmoy_mois / Tx_mois – Modèle vs TRACC +{scenario_sel}/{ville_sel}")
+    ax.set_title(f"Tn_mois / Tmoy_mois / Tx_mois – Modèle vs TRACC {ville_sel}")
     ax.set_ylabel("Température (°C)")
     ax.tick_params(axis='x', rotation=45)
     ax.legend(facecolor="black")
@@ -658,7 +658,7 @@ if uploaded:
         ax.plot(pct_for_cdf, obs_tn_cdf, linestyle="--", linewidth=1.7, label="TRACC Tn", color=colors["Tn"])
     
         # Mise en forme
-        ax.set_title(f"{mois} — CDF Tn_jour / Tmoy_jour / Tx_jour (Modèle vs TRACC +{scenario_sel}/{ville_sel})", color="white")
+        ax.set_title(f"{mois} — CDF Tn_jour / Tmoy_jour / Tx_jour (Modèle vs TRACC {ville_sel})", color="white")
         ax.set_xlabel("Percentile", color="white")
         ax.set_ylabel("Température (°C)", color="white")
         ax.tick_params(colors="white")
@@ -1027,7 +1027,7 @@ if uploaded:
         )
         i+=1
     
-    ax.set_title(f"Percentiles {percentiles_list} – Modèle vs TRACC +{scenario_sel}/{ville_sel}")
+    ax.set_title(f"Percentiles {percentiles_list} – Modèle vs TRACC {ville_sel}")
     ax.set_ylabel("Température (°C)")
     ax.tick_params(axis="x", rotation=45)
     ax.legend(ncol=2, facecolor="black")
@@ -1048,7 +1048,7 @@ if uploaded:
 
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.plot(np.linspace(0, 100, 100), mod_percentiles_100, label="Modèle", color=couleur_modele)
-        ax.plot(np.linspace(0, 100, 100), obs_percentiles_100, label=f"TRACC +{scenario_sel}/{ville_sel}", color=couleur_TRACC)
+        ax.plot(np.linspace(0, 100, 100), obs_percentiles_100, label=f"TRACC {ville_sel}", color=couleur_TRACC)
         ax.set_title(f"{mois} - Fonction de répartition", color="white")
         ax.set_xlabel("Percentile", color="white")
         ax.set_ylabel("Température (°C)", color="white")
@@ -1062,7 +1062,7 @@ if uploaded:
         mod_p = np.percentile(mod_mois, percentiles_list)
         df_p = pd.DataFrame({
             "Percentile": [f"P{p}" for p in percentiles_list],
-            f"TRACC +{scenario_sel}/{ville_sel}": obs_p,
+            f"TRACC {ville_sel}": obs_p,
             "Modèle": mod_p
         }).round(2)
         st.write(f"{mois} - Percentiles")
@@ -1091,7 +1091,7 @@ if uploaded:
     # ----- Plot de la CDF annuelle -----
     fig, ax = plt.subplots(figsize=(12, 4))
     ax.plot(percentiles_cdf, mod_percentiles_annual, label="Modèle", color=couleur_modele)
-    ax.plot(percentiles_cdf, obs_percentiles_annual, label=f"TRACC +{scenario_sel}/{ville_sel}", color=couleur_TRACC)
+    ax.plot(percentiles_cdf, obs_percentiles_annual, label=f"TRACC {ville_sel}", color=couleur_TRACC)
     
     ax.set_title("Année entière - Fonction de répartition", color="white")
     ax.set_xlabel("Percentile", color="white")
@@ -1111,7 +1111,7 @@ if uploaded:
     
     df_p_annual = pd.DataFrame({
         "Percentile": [f"P{p}" for p in percentiles_list],
-        f"TRACC +{scenario_sel}/{ville_sel}": obs_p_annual,
+        f"TRACC {ville_sel}": obs_p_annual,
         "Modèle": mod_p_annual
     }).round(2)
     
@@ -1119,7 +1119,7 @@ if uploaded:
     st.dataframe(df_p_annual, hide_index=True)
 
 
-    st.subheader(f"Bilan modèle vs TRACC +{scenario_sel}/{ville_sel} (Modèle - TRACC)") 
+    st.subheader(f"Bilan modèle vs TRACC {ville_sel} (Modèle - TRACC)") 
     # Création du DataFrame
     df_bilan = pd.DataFrame(df_percentiles_all).round(2)
     df_bilan["Ecart"] = df_bilan["Mod"] - df_bilan["Obs"]
