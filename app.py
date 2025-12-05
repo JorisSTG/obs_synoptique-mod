@@ -48,7 +48,7 @@ else:
 # Créer DataFrame
 df_obs = pd.DataFrame({
     "time": obs_time,
-    "T2m": obs_temp
+    "T": obs_temp
 })
 
 st.write(f"Données chargées : {file_sel} – Année {annee_sel}")
