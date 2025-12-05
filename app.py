@@ -63,93 +63,65 @@ mois_noms = {
     10: "10 - Octobre", 11: "11 - Novembre", 12: "12 - Décembre"
 }
 
-# -------------------------------------------------------------------
-# 1) Construire le mapping année -> fichier
-# -------------------------------------------------------------------
+import streamlit as st
+import pandas as pd
+import xarray as xr
+import os
+
+# Dossiers
 dossiers = ["obs2000_2009", "obs", "typique"]
-annee_to_file = {}  # dict : annee -> (dossier, fichier)
 
-for dossier in dossiers:
-    for f in os.listdir(dossier):
-        if f.endswith(".nc"):
-            path = os.path.join(dossier, f)
-            ds = xr.open_dataset(path, decode_times=True)
-            if "T2m" in ds:
-                # convertir les années en int
-                years = ds["time"].dt.year.values
-                years = [int(y) for y in years]
-                for y in years:
-                    annee_to_file[y] = (dossier, f)
-            ds.close()
-
-# trier les années uniques
-annees_dispo = sorted(annee_to_file.keys())
+# Liste des villes (on suppose que toutes les villes ont le même nom de fichier dans chaque dossier)
+villes = ["AGEN", "CARPENTRAS", "MACON", "MARIGNANE", "NANCY", "RENNES", "TOURS", "TRAPPES"]
 
 # -------------------------------------------------------------------
-# Menu selectbox pour choisir l'année
+# 1) Choix de la ville
 # -------------------------------------------------------------------
+ville_sel = st.selectbox("Choisir la ville :", villes)
+
+# -------------------------------------------------------------------
+# 2) Choix de l'année
+# -------------------------------------------------------------------
+# Exemple : on connaît les plages d'années par dossier
+annees_obs2000_2009 = list(range(2000, 2010))
+annees_obs2010_2019 = list(range(2010, 2020))
+annees_typique = [9999]  # placeholder pour l'année typique
+
+annees_dispo = annees_obs2000_2009 + annees_obs2010_2019 + annees_typique
 annee_sel = st.selectbox("Choisir l'année :", annees_dispo)
 
 # -------------------------------------------------------------------
-# Sécurité : vérifier que l'année existe
+# 3) Déterminer automatiquement le dossier en fonction de l'année
 # -------------------------------------------------------------------
-if annee_sel not in annee_to_file:
-    st.error(f"⚠️ L'année {annee_sel} n'a pas été trouvée dans les fichiers.")
-    st.stop()
-
-dossier_sel, fichier_sel = annee_to_file[annee_sel]
-nc_path = os.path.join(dossier_sel, fichier_sel)
-
-# -------------------------------------------------------------------
-# Suite du code inchangé
-# -------------------------------------------------------------------
-
+if annee_sel in annees_obs2000_2009:
+    dossier_sel = "obs2000_2009"
+elif annee_sel in annees_obs2010_2019:
+    dossier_sel = "obs"
+else:
+    dossier_sel = "typique"
 
 # -------------------------------------------------------------------
-# 4) Choix de la ville (déduit automatiquement du nom du fichier)
+# 4) Construire le chemin vers le fichier correspondant à la ville
 # -------------------------------------------------------------------
-ville_sel = fichier_sel.replace(".nc", "")
-
-ds_obs = xr.open_dataset(nc_path, decode_times=True)
-
-if "T2m" not in ds_obs:
-    st.error("⚠️ La variable 'T2m' est absente du fichier NetCDF.")
-    st.stop()
-
-times = ds_obs["time"].to_series()
-T = ds_obs["T2m"].to_series()
-
-# Extraire uniquement l'année sélectionnée
-mask = times.dt.year == annee_sel
-obs_time = times[mask]
-obs_temp = T[mask].values
+nc_file = os.path.join(dossier_sel, f"{ville_sel}.nc")
+ds = xr.open_dataset(nc_file, decode_times=True)
 
 # -------------------------------------------------------------------
-# 5) Upload CSV du modèle (1 an = 8760 valeurs)
+# 5) Extraire uniquement les données pour l'année choisie
 # -------------------------------------------------------------------
-uploaded = st.file_uploader(
-    "Déposer le fichier CSV du modèle (8760 valeurs horaires) :",
-    type=["csv"]
-)
+if dossier_sel != "typique":
+    mask = ds["time"].dt.year == annee_sel
+    obs_time = ds["time"].values[mask]
+    obs_temp = ds["T2m"].values[mask]
+else:
+    obs_time = ds["time"].values
+    obs_temp = ds["T2m"].values
 
-if uploaded:
-    model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
+# Créer le DataFrame
+df_obs = pd.DataFrame({
+    "time": obs_time,
+    "T2m": obs_temp
+})
 
-    if len(model_values) != 8760:
-        st.warning(f"⚠️ Le CSV contient {len(model_values)} valeurs, pas 8760.")
-
-    # -------------------------------------------------------------------
-    # 6) Création DataFrame OBS (1 an)
-    # -------------------------------------------------------------------
-    df_obs = pd.DataFrame({
-        "time": obs_time,
-        "T2m": obs_temp
-    })
-
-    df_obs["year"] = df_obs["time"].dt.year
-    df_obs["month"] = df_obs["time"].dt.month
-    df_obs["day"] = df_obs["time"].dt.day
-    df_obs["month_name"] = df_obs["month"].map(mois_noms)
-
-    st.success(f"✔ Données chargées : {ville_sel} – Année {annee_sel}")
-    st.dataframe(df_obs.head())
+st.write(f"Données chargées : {ville_sel} – Année {annee_sel}")
+st.dataframe(df_obs.head())
