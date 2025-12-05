@@ -22,14 +22,12 @@ plt.rcParams.update({
 st.title("Comparaison : Modèle / TRACC")
 st.markdown(
     """
-    L’objectif de cette application est d’évaluer la précision de données météorologiques en les comparant à des données de référence, afin de juger de leur pertinence pour les projections climatiques futures en France.
+    L’objectif de cette application est d’évaluer la précision de données météorologiques en les comparant à des données de référence.
     """,
     unsafe_allow_html=True
 )
 
 # -------- Paramètres --------
-scenarios = ["2", "2_VC", "2-7", "2-7_VC", "4", "4_VC"]
-villes = ["AGEN", "CARPENTRAS", "MACON", "MARIGNANE", "NANCY", "RENNES", "TOURS", "TRAPPES"]
 heures_par_mois = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]
 percentiles_list = [10, 25, 50, 75, 90]
 couleur_modele = "goldenrod"
@@ -51,42 +49,34 @@ mois_noms = {
     10: "10 - Octobre", 11: "11 - Novembre", 12: "12 - Décembre"
 }
 
-# -------- Dossiers --------
+# -------- Dossiers et années disponibles --------
 dossiers = {
-    "obs2000_2009": list(range(2000, 2010)),
-    "obs": list(range(2010, 2020)),
-    "typique": ["Typique"]
+    "Typique": ["typique"],
+    "2000-2009": list(range(2000, 2010)),
+    "2010-2019": list(range(2010, 2020))
 }
 
-# -------- Sélection de la ville --------
-ville_sel = st.selectbox("Choisir la ville :", villes)
+# -------- Sélection de l'année ou "Typique" --------
+annees_dispo = ["Typique"] + list(range(2000, 2020))
+annee_sel = st.selectbox("Choisir l'année ou 'Typique' :", annees_dispo)
 
-# -------- Liste des années disponibles --------
-annees_dispo = []
-for dossier, annees in dossiers.items():
-    annees_dispo.extend(annees)
-
-# -------- Sélection de l'année --------
-annee_sel = st.selectbox("Choisir l'année :", annees_dispo)
-
-# -------- Déterminer le dossier et le fichier --------
+# -------- Déterminer le dossier et lister les fichiers --------
 if annee_sel == "Typique":
     dossier_sel = "typique"
-    annee_sel = 9999  # Valeur placeholder pour typique
+    annee_sel = 9999  # Placeholder pour typique
+elif annee_sel in range(2000, 2010):
+    dossier_sel = "obs2000_2009"
+elif annee_sel in range(2010, 2020):
+    dossier_sel = "obs"
 else:
-    if annee_sel in range(2000, 2010):
-        dossier_sel = "obs2000_2009"
-    elif annee_sel in range(2010, 2020):
-        dossier_sel = "obs"
-    else:
-        st.error("Année non valide.")
-        st.stop()
+    st.error("Sélection invalide.")
+    st.stop()
 
-# -------- Lister les fichiers .nc disponibles pour la ville --------
-all_files = [f for f in os.listdir(dossier_sel) if f.endswith(".nc") and ville_sel in f]
+# -------- Lister les fichiers .nc disponibles --------
+all_files = [f for f in os.listdir(dossier_sel) if f.endswith(".nc")]
 
 if not all_files:
-    st.error(f"Aucun fichier .nc trouvé pour la ville {ville_sel} dans le dossier {dossier_sel}.")
+    st.error(f"Aucun fichier .nc trouvé dans le dossier {dossier_sel}.")
     st.stop()
 
 # -------- Sélection du fichier NetCDF --------
