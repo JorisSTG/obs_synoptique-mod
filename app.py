@@ -28,6 +28,8 @@ st.markdown(
 )
 
 # -------- Paramètres --------
+scenarios = ["2", "2_VC", "2-7", "2-7_VC", "4", "4_VC"]
+villes = ["AGEN", "CARPENTRAS", "MACON", "MARIGNANE", "NANCY", "RENNES", "TOURS", "TRAPPES"]
 heures_par_mois = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]
 percentiles_list = [10, 25, 50, 75, 90]
 couleur_modele = "goldenrod"
@@ -50,36 +52,54 @@ mois_noms = {
 }
 
 # -------- Dossiers --------
-dossiers = ["obs2000_2009", "obs", "typique"]
+dossiers = {
+    "obs2000_2009": list(range(2000, 2010)),
+    "obs": list(range(2010, 2020)),
+    "typique": ["Typique"]
+}
 
-# Sélection du dossier
-dossier_sel = st.selectbox("Choisir le dossier :", dossiers)
+# -------- Sélection de la ville --------
+ville_sel = st.selectbox("Choisir la ville :", villes)
 
-# Lister tous les fichiers .nc disponibles dans le dossier sélectionné
-all_files = [f for f in os.listdir(dossier_sel) if f.endswith(".nc")]
+# -------- Liste des années disponibles --------
+annees_dispo = []
+for dossier, annees in dossiers.items():
+    annees_dispo.extend(annees)
 
-# Menu pour choisir le fichier NetCDF
-file_sel = st.selectbox("Choisir le fichier NetCDF (ville + code) :", all_files)
-
-# Chemin du fichier sélectionné
-nc_path = os.path.join(dossier_sel, file_sel)
-
-# Déterminer les années disponibles
-if "obs2000_2009" in dossier_sel:
-    annees_dispo = list(range(2000, 2010))
-elif "obs" in dossier_sel:
-    annees_dispo = list(range(2010, 2020))
-else:
-    annees_dispo = [9999]  # Placeholder pour typique
-
-# Choix de l'année
+# -------- Sélection de l'année --------
 annee_sel = st.selectbox("Choisir l'année :", annees_dispo)
 
-# Ouvrir le fichier
+# -------- Déterminer le dossier et le fichier --------
+if annee_sel == "Typique":
+    dossier_sel = "typique"
+    annee_sel = 9999  # Valeur placeholder pour typique
+else:
+    if annee_sel in range(2000, 2010):
+        dossier_sel = "obs2000_2009"
+    elif annee_sel in range(2010, 2020):
+        dossier_sel = "obs"
+    else:
+        st.error("Année non valide.")
+        st.stop()
+
+# -------- Lister les fichiers .nc disponibles pour la ville --------
+all_files = [f for f in os.listdir(dossier_sel) if f.endswith(".nc") and ville_sel in f]
+
+if not all_files:
+    st.error(f"Aucun fichier .nc trouvé pour la ville {ville_sel} dans le dossier {dossier_sel}.")
+    st.stop()
+
+# -------- Sélection du fichier NetCDF --------
+file_sel = st.selectbox("Choisir le fichier NetCDF :", all_files)
+
+# -------- Chemin du fichier --------
+nc_path = os.path.join(dossier_sel, file_sel)
+
+# -------- Ouvrir le fichier --------
 ds = xr.open_dataset(nc_path, decode_times=True)
 
-# Extraire uniquement l'année sélectionnée (sauf typique)
-if "typique" not in dossier_sel:
+# -------- Extraire les données pour l'année sélectionnée --------
+if annee_sel != 9999:
     mask = ds["time"].dt.year == annee_sel
     obs_time = ds["time"].values[mask]
     obs_temp = ds["T"].values[mask]
@@ -93,7 +113,7 @@ uploaded = st.file_uploader("Déposer le fichier CSV du modèle (colonne unique 
 if uploaded:
     st.markdown("")
 
-    # Lecture CSV modèle
+    # -------- Lecture CSV modèle --------
     model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
 
     # -------- RMSE --------
