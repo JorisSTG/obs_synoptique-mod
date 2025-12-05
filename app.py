@@ -40,10 +40,10 @@ ds = xr.open_dataset(nc_path, decode_times=True)
 if "typique" not in dossier_sel:
     mask = ds["time"].dt.year == annee_sel
     obs_time = ds["time"].values[mask]
-    obs_temp = ds["T2m"].values[mask]
+    obs_temp = ds["T2"].values[mask]
 else:
     obs_time = ds["time"].values
-    obs_temp = ds["T2m"].values
+    obs_temp = ds["T2"].values
 
 # Créer DataFrame
 df_obs = pd.DataFrame({
