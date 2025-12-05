@@ -4,7 +4,6 @@ import xarray as xr
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import norm
 
 # ---- STYLE sombre pour se fondre avec le thème Streamlit ----
 plt.style.use("dark_background")
@@ -28,8 +27,8 @@ st.markdown("""
 L’objectif de cette application est de comparer un **modèle (CSV, 1 an)** avec des données d'observation sur **une seule année**, afin de faciliter les calculs et analyses.  
 
 Trois types de données de référence sont disponibles :  
-- **obs** : observations 2010–2019  
 - **obs2000_2009** : observations 2000–2009  
+- **obs** : observations 2010–2019  
 - **typique** : année type  
 
 Cet outil est principalement utilisé dans le domaine du bâtiment, notamment pour l’évaluation thermique à travers des modèles de simulation dynamique (STD).
@@ -65,34 +64,56 @@ mois_noms = {
 }
 
 # -------------------------------------------------------------------
-# 1) Sélection du type d'observation
+# 1) Construire le mapping année -> fichier
 # -------------------------------------------------------------------
-type_sel = st.selectbox(
-    "Choisir le type de données d'observation :",
-    ["obs", "obs2000_2009", "typique"]
-)
+dossiers = ["obs2000_2009", "obs", "typique"]
+annee_to_file = {}  # dict : annee -> (dossier, fichier)
 
-base_folder = type_sel
+for dossier in dossiers:
+    for f in os.listdir(dossier):
+        if f.endswith(".nc"):
+            path = os.path.join(dossier, f)
+            ds = xr.open_dataset(path, decode_times=True)
+            if "T2m" in ds:
+                years = ds["time"].dt.year.values
+                for y in years:
+                    annee_to_file[y] = (dossier, f)
+            ds.close()
 
-if not os.path.isdir(base_folder):
-    st.error(f"⚠️ Le dossier {base_folder} est introuvable.")
+annees_dispo = sorted(annee_to_file.keys())
+
+# -------------------------------------------------------------------
+# 2) Choix de l'année
+# -------------------------------------------------------------------
+annee_sel = st.selectbox("Choisir l'année :", annees_dispo)
+
+# -------------------------------------------------------------------
+# 3) Trouver le fichier correspondant à l'année choisie
+# -------------------------------------------------------------------
+dossier_sel, fichier_sel = annee_to_file[annee_sel]
+nc_path = os.path.join(dossier_sel, fichier_sel)
+
+# -------------------------------------------------------------------
+# 4) Choix de la ville (déduit automatiquement du nom du fichier)
+# -------------------------------------------------------------------
+ville_sel = fichier_sel.replace(".nc", "")
+
+ds_obs = xr.open_dataset(nc_path, decode_times=True)
+
+if "T2m" not in ds_obs:
+    st.error("⚠️ La variable 'T2m' est absente du fichier NetCDF.")
     st.stop()
 
-# -------------------------------------------------------------------
-# 2) Liste automatique des villes disponibles
-# -------------------------------------------------------------------
-nc_files = [f for f in os.listdir(base_folder) if f.endswith(".nc")]
+times = ds_obs["time"].to_series()
+T = ds_obs["T2m"].to_series()
 
-if len(nc_files) == 0:
-    st.error("⚠️ Aucun fichier NetCDF trouvé dans ce dossier.")
-    st.stop()
-
-ville_list = [f.replace(".nc", "") for f in nc_files]
-
-ville_sel = st.selectbox("Choisir la ville :", ville_list)
+# Extraire uniquement l'année sélectionnée
+mask = times.dt.year == annee_sel
+obs_time = times[mask]
+obs_temp = T[mask].values
 
 # -------------------------------------------------------------------
-# 3) Upload CSV modèle
+# 5) Upload CSV du modèle (1 an = 8760 valeurs)
 # -------------------------------------------------------------------
 uploaded = st.file_uploader(
     "Déposer le fichier CSV du modèle (8760 valeurs horaires) :",
@@ -100,40 +121,10 @@ uploaded = st.file_uploader(
 )
 
 if uploaded:
-
-    # Lecture CSV modèle
     model_values = pd.read_csv(uploaded, header=0).iloc[:, 0].values
 
     if len(model_values) != 8760:
-        st.warning(f"⚠️ Le fichier CSV contient {len(model_values)} valeurs. Une année complète = 8760 valeurs.")
-
-    # -------------------------------------------------------------------
-    # 4) Lecture du fichier NetCDF de la ville
-    # -------------------------------------------------------------------
-    nc_path = os.path.join(base_folder, f"{ville_sel}.nc")
-    ds_obs = xr.open_dataset(nc_path, decode_times=True)
-
-    if "T2m" not in ds_obs:
-        st.error("⚠️ La variable 'T2m' est absente du fichier NetCDF.")
-        st.stop()
-
-    times = ds_obs["time"].to_series()
-    T = ds_obs["T2m"].to_series()
-
-    # -------------------------------------------------------------------
-    # 5) Extraction des années disponibles
-    # -------------------------------------------------------------------
-    annees_dispo = sorted(times.dt.year.unique())
-
-    if type_sel != "typique":
-        annee_sel = st.selectbox("Sélectionner une année :", annees_dispo)
-        mask = times.dt.year == annee_sel
-        obs_time = times[mask]
-        obs_temp = T[mask].values
-    else:
-        annee_sel = "Année typique"
-        obs_time = times
-        obs_temp = T.values
+        st.warning(f"⚠️ Le CSV contient {len(model_values)} valeurs, pas 8760.")
 
     # -------------------------------------------------------------------
     # 6) Création DataFrame OBS (1 an)
@@ -148,4 +139,5 @@ if uploaded:
     df_obs["day"] = df_obs["time"].dt.day
     df_obs["month_name"] = df_obs["month"].map(mois_noms)
 
-    st.success(f"✔ Données chargées : {ville_sel} – {annee_sel}")
+    st.success(f"✔ Données chargées : {ville_sel} – Année {annee_sel}")
+    st.dataframe(df_obs.head())
