@@ -135,7 +135,15 @@ if uploaded:
         return np.sqrt(np.nanmean((a_sorted - b_sorted) ** 2))
 
     # -------- Précision basée sur les écarts de percentiles --------
-    def precision_ecarts_percentiles(a, b):
+    def precision_ecarts_percentiles(a, b, min_scale=0.5, debug=False):
+        """
+        Score linéaire entre 100% (diff=0) et 0% (diff >= 2*scale),
+        where scale = max(pooled_std, min_scale).
+        pooled_std = sqrt((var(a)+var(b))/2)
+        """
+    
+        a = np.asarray(a)
+        b = np.asarray(b)
         if len(a) == 0 or len(b) == 0:
             return np.nan
     
@@ -144,18 +152,33 @@ if uploaded:
         pb = np.percentile(b, percentiles)
     
         diff_moyenne = np.mean(np.abs(pa - pb))
-        scale = np.std(pb)
     
-        if scale == 0:
-            return 100.0
+        # pooled std (plus robuste que prendre uniquement std des observations)
+        var_a = np.nanvar(pa)
+        var_b = np.nanvar(pb)
+        pooled_std = np.sqrt(0.5 * (var_a + var_b))
     
-        # --- bornage ---
-        diff_moyenne = min(diff_moyenne, 3 * scale)
+        # fallback: si pooled_std est 0 (séries constantes), prendre IQR-based ou plancher
+        if pooled_std == 0:
+            iqr_b = np.percentile(pb, 75) - np.percentile(pb, 25)
+            # approx std from IQR: IQR/1.349 ; si IQR aussi nul, on gardera min_scale
+            pooled_std = iqr_b / 1.349 if iqr_b > 0 else 0.0
     
-        # --- score linéaire ---
-        score = 100 * (1 - diff_moyenne / (3 * scale))
+        # impose un plancher pour éviter sigma quasi-nul
+        scale = max(pooled_std, min_scale)
+    
+        # borne diff
+        diff_clipped = min(diff_moyenne, 2 * scale)
+    
+        # score linéaire (0..100)
+        score = 100 * (1 - diff_clipped / (2 * scale))
+        score = float(np.clip(score, 0.0, 100.0))
+    
+        if debug:
+            print(f"diff_moyenne={diff_moyenne:.3f}, pooled_std={pooled_std:.3f}, scale={scale:.3f}, score={score:.2f}")
     
         return round(score, 2)
+
 
 
     # -------- Boucle sur les mois --------
