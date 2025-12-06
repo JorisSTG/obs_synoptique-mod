@@ -85,17 +85,43 @@ file_sel = st.selectbox("Choisir le fichier NetCDF :", all_files)
 # -------- Chemin du fichier --------
 nc_path = os.path.join(dossier_sel, file_sel)
 
-# -------- Ouvrir le fichier --------
+# -------- Ouvrir le fichier NetCDF --------
 ds = xr.open_dataset(nc_path, decode_times=True)
 
-# -------- Extraire les données pour l'année sélectionnée --------
-if annee_sel != 9999:
-    mask = ds["time"].dt.year == annee_sel
-    obs_time = ds["time"].values[mask]
-    obs_temp = ds["T"].values[mask]
+# -------- Vérification du contenu du fichier --------
+if "time" not in ds or "T" not in ds:
+    st.error("Le fichier sélectionné ne contient pas les variables 'time' et 'T'.")
+    st.stop()
+
+# -------- Extraction brut des dates et températures --------
+# Conversion en DateTimeIndex → indispensable pour manipuler facilement les dates
+time_all = ds["time"].to_index()      # pandas DateTimeIndex
+temp_all = ds["T"].values             # tableau numpy
+
+# -------- Suppression des 29 février (toujours absent dans le modèle CSV) --------
+mask_no_feb29 = ~((time_all.month == 2) & (time_all.day == 29))
+time_all = time_all[mask_no_feb29]
+temp_all = temp_all[mask_no_feb29]
+
+# -------- Sélection des données selon l'année choisie --------
+if annee_sel != 9999:   # cas normal (pas "Typique")
+    mask_year = (time_all.year == annee_sel)
+    obs_time = time_all[mask_year]
+    obs_temp = temp_all[mask_year]
+
+    # Vérification si l'année existe dans les données NetCDF
+    if len(obs_temp) == 0:
+        st.error(f"L'année {annee_sel} n'est pas disponible dans les données du fichier {file_sel}.")
+        st.stop()
 else:
-    obs_time = ds["time"].values
-    obs_temp = ds["T"].values
+    # Mode "Typique" → aucune sélection d'année
+    obs_time = time_all
+    obs_temp = temp_all
+
+# -------- Résumé pour debug optionnel --------
+st.write(f"Nombre de points observés chargés : {len(obs_temp)}")
+st.write(f"Période observée : du {obs_time[0]} au {obs_time[-1]}")
+
 
 # -------- Upload CSV modèle --------
 uploaded = st.file_uploader("Déposer le fichier CSV du modèle (colonne unique T°C) :", type=["csv"])
