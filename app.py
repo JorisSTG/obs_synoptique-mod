@@ -52,13 +52,15 @@ mois_noms = {
 # -------- Dossiers et années disponibles --------
 dossiers = {
     "Typique": ["typique"],
+    "Typique chaude": ["typique_VC"],
+    "Typique froide": ["typique_VF"],
     "2000-2009": list(range(2000, 2010)),
     "2010-2019": list(range(2010, 2020))
 }
 
 # -------- Sélection de l'année ou "Typique" --------
-annees_dispo = ["Typique"] + list(range(2000, 2020))
-annee_sel = st.selectbox("Choisir l'année ou 'Typique' :", annees_dispo)
+annees_dispo = ["Typique"] + ["Typique chaude"] + ["Typique froide"]  + list(range(2000, 2020))
+annee_sel = st.selectbox("Choisir l'année ou 'Typique (VC/Normal/VF)' :", annees_dispo)
 
 # -------- Déterminer le dossier et lister les fichiers --------
 if annee_sel == "Typique":
