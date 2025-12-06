@@ -170,13 +170,6 @@ if uploaded:
         # -------- Modèle : découpe par bloc d'heures --------
         mod_mois = model_values[start_idx_model:start_idx_model + nb_heures]
     
-        # Sécurité si le modèle n’a pas assez de points
-        if len(mod_mois) != len(obs_mois_vals):
-            st.warning(
-                f"⚠ Le modèle et les observations n'ont pas la même taille pour {mois} "
-                f"({len(mod_mois)} vs {len(obs_mois_vals)} valeurs)."
-            )
-    
         # -------- Calculs --------
         val_rmse = rmse(mod_mois, obs_mois_vals)
         pct_precision = precision_ecarts_percentiles(mod_mois, obs_mois_vals)
