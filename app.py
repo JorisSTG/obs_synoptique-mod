@@ -118,11 +118,6 @@ else:
     obs_time = time_all
     obs_temp = temp_all
 
-# -------- Résumé pour debug optionnel --------
-st.write(f"Nombre de points observés chargés : {len(obs_temp)}")
-st.write(f"Période observée : du {obs_time[0]} au {obs_time[-1]}")
-
-
 # -------- Upload CSV modèle --------
 uploaded = st.file_uploader("Déposer le fichier CSV du modèle (colonne unique T°C) :", type=["csv"])
 
