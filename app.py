@@ -161,21 +161,40 @@ if uploaded:
     # -------- Boucle sur les mois --------
     results_rmse = []
     obs_mois_all = []
-    start_idx_model = 0
-
+    start_idx_model = 0  # utile uniquement pour découper le modèle
+    
     for mois_num, nb_heures in enumerate(heures_par_mois, start=1):
+    
         mois = mois_noms[mois_num]
-        mod_mois = model_values[start_idx_model:start_idx_model + nb_heures]
-        obs_mois_vals = obs_temp[(start_idx_model // 24):(start_idx_model // 24 + nb_heures // 24)]
+    
+        # -------- Observations : sélection horaire propre --------
+        mask_mois = (obs_time.month == mois_num)
+        obs_mois_vals = obs_temp[mask_mois]  # toutes les heures du mois
         obs_mois_all.append(obs_mois_vals)
+    
+        # -------- Modèle : découpe par bloc d'heures --------
+        mod_mois = model_values[start_idx_model:start_idx_model + nb_heures]
+    
+        # Sécurité si le modèle n’a pas assez de points
+        if len(mod_mois) != len(obs_mois_vals):
+            st.warning(
+                f"⚠ Le modèle et les observations n'ont pas la même taille pour {mois} "
+                f"({len(mod_mois)} vs {len(obs_mois_vals)} valeurs)."
+            )
+    
+        # -------- Calculs --------
         val_rmse = rmse(mod_mois, obs_mois_vals)
         pct_precision = precision_ecarts_percentiles(mod_mois, obs_mois_vals)
+    
         results_rmse.append({
             "Mois": mois,
             "RMSE (°C)": round(val_rmse, 2),
             "Précision percentile (%)": pct_precision
         })
+    
+        # -------- Avancer dans le modèle --------
         start_idx_model += nb_heures
+
 
     # -------- DataFrame final --------
     df_rmse = pd.DataFrame(results_rmse)
