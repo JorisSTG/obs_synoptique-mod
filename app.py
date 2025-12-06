@@ -138,20 +138,25 @@ if uploaded:
     def precision_ecarts_percentiles(a, b):
         if len(a) == 0 or len(b) == 0:
             return np.nan
+    
         percentiles = np.arange(1, 100)
         pa = np.percentile(a, percentiles)
         pb = np.percentile(b, percentiles)
-
+    
         diff_moyenne = np.mean(np.abs(pa - pb))
         scale = np.std(pb)
-
+    
         if scale == 0:
             return 100.0
-
+    
+        # --- bornage ---
+        diff_moyenne = min(diff_moyenne, 2 * scale)
+    
+        # --- score linéaire ---
         score = 100 * (1 - diff_moyenne / (2 * scale))
-        score = max(0, score)
-
+    
         return round(score, 2)
+
 
     # -------- Boucle sur les mois --------
     results_rmse = []
