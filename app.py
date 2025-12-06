@@ -66,10 +66,10 @@ annee_sel = st.selectbox("Choisir l'année ou 'Typique (VC/Normal/VF)' :", annee
 if annee_sel == "Typique":
     dossier_sel = "typique"
     annee_sel = 9999  # Placeholder pour typique
-elif annee_sel == "Typqiue chaude":
+elif annee_sel == "Typique chaude":
     dossier_sel = "typique_VC"
     annee_sel = 9999  # Placeholder pour typique
-elif annee_sel == "Typqiue froide":
+elif annee_sel == "Typique froide":
     dossier_sel = "typique_VF"
     annee_sel = 9999  # Placeholder pour typique
 elif annee_sel in range(2000, 2010):
