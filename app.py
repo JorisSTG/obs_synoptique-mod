@@ -149,7 +149,7 @@ if uploaded:
             return 100.0
 
         score = 100 * (1 - diff_moyenne / (2 * scale))
-        score = max(0, min(100, score))
+        score = max(0, score)
 
         return round(score, 2)
 
