@@ -1023,8 +1023,37 @@ if uploaded:
     for p in st.session_state["resume_djc_djf"]:
         st.write("- " + p)
 
-
-
+    # -------- Calcul des percentiles P1 à P100 --------
+    percentiles = np.arange(1, 101)
+    P_obs = np.percentile(obs_annee, percentiles)
+    P_mod = np.percentile(model_annee, percentiles)
+    
+    # -------- Graphique PXX modèle vs TRACC avec croix et couleurs conditionnelles --------
+    fig, ax = plt.subplots(figsize=(6,6))
+    
+    # Définir les couleurs selon qui est plus chaud
+    colors = ['lightgray' if obs > mod else 'goldenrod' for obs, mod in zip(P_obs, P_mod)]
+    
+    # Tracer les croix
+    ax.scatter(P_obs, P_mod, color=colors, marker='x', s=50, label='Percentiles')
+    
+    # Diagonale y=x
+    min_val = min(min(P_obs), min(P_mod))
+    max_val = max(max(P_obs), max(P_mod))
+    ax.plot([min_val, max_val], [min_val, max_val], color='white', linestyle='--', label='y=x')
+    
+    # Carré : même échelle sur x et y
+    ax.set_xlim(min_val, max_val)
+    ax.set_ylim(min_val, max_val)
+    ax.set_aspect('equal', 'box')
+    
+    ax.set_xlabel("PXX TRACC (°C)")
+    ax.set_ylabel("PXX Modèle (°C)")
+    ax.set_title("Comparaison des percentiles annuels")
+    ax.grid(True, linestyle=':', color='gray', alpha=0.5)
+    ax.legend()
+    st.pyplot(fig)
+    
     # ======================================
     #  COURBES DES PERCENTILES PAR MOIS
     # ======================================
