@@ -165,9 +165,6 @@ if uploaded:
         indice_percent = overlap * 100
         return round(indice_percent, 2)
     
-
-
-
     # -------- Boucle sur les mois --------
     results_rmse = []
     obs_mois_all = []
@@ -197,7 +194,6 @@ if uploaded:
     
         # -------- Avancer dans le modèle --------
         start_idx_model += nb_heures
-
 
     # -------- DataFrame final --------
     df_rmse = pd.DataFrame(results_rmse)
