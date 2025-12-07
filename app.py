@@ -211,7 +211,7 @@ if uploaded:
         results_rmse.append({
             "Mois": mois,
             "RMSE (°C)": round(val_rmse, 2),
-            "RMSE_hours": round(val_rmse_h, 2),
+            "RMSE (heures)": round(val_rmse_h, 2),
             "Précision (%)": pct_precision
         })
     
@@ -223,11 +223,11 @@ if uploaded:
     
     df_rmse_styled = (
         df_rmse.style
-        .background_gradient(subset=["Précision (%)"], cmap="RdYlGn", vmin=0, vmax=100, axis=None)
-        .format({"Précision (%)": "{:.2f}", "RMSE (°C)": "{:.2f}", "RMSE_hours": "{:.2f}"})
+        .background_gradient(subset=["Précision (%)"], cmap="RdYlGn", vmin=vminP, vmax=vmaxP, axis=None)
+        .format({"Précision (%)": "{:.2f}", "RMSE (°C)": "{:.2f}", "RMSE (heures)": "{:.2f}"})
     )
     
-    st.subheader("Précision du modèle : RMSE (°C), RMSE_hours et indice de recouvrement (%)")
+    st.subheader("Précision du modèle : RMSE (°C), RMSE (heures) et précision (%)")
     st.dataframe(df_rmse_styled, hide_index=True)
 
 
