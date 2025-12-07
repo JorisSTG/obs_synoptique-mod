@@ -142,27 +142,29 @@ if uploaded:
         b_sorted = np.sort(b[:min_len])
         return np.sqrt(np.nanmean((a_sorted - b_sorted) ** 2))
 
-    # -------- Précision basée sur les écarts de percentiles --------
-    def precision_ecarts_percentiles(a, b, min_scale=0.5):
+    # -------- Nouvelle fonction : indice de recouvrement --------
+    def precision_overlap(a, b, bin_width=1.0):
+        """
+        Calcule l'indice de recouvrement (%) entre deux séries de données.
+        bin_width : largeur des tranches pour l'histogramme (en °C)
+        """
         if len(a) == 0 or len(b) == 0:
             return np.nan
     
-        # tronquer séries
-        min_len = min(len(a), len(b))
-        a = a[:min_len]
-        b = b[:min_len]
+        # Définir les bornes de l'histogramme
+        min_val = min(np.min(a), np.min(b))
+        max_val = max(np.max(a), np.max(b))
+        bins = np.arange(min_val, max_val + bin_width, bin_width)
     
-        percentiles = np.linspace(0, 100, min(100, len(a)))
-        pa = np.percentile(a, percentiles)
-        pb = np.percentile(b, percentiles)
+        # Calcul des histogrammes normalisés
+        hist_a, _ = np.histogram(a, bins=bins, density=True)
+        hist_b, _ = np.histogram(b, bins=bins, density=True)
     
-        diff_moyenne = np.mean(np.abs(pa - pb))
-        pooled_std = np.sqrt((np.var(pa) + np.var(pb)) / 2)
-        scale = max(pooled_std, min_scale)
+        # Indice de recouvrement
+        overlap = np.sum(np.minimum(hist_a, hist_b) * bin_width)
+        indice_percent = overlap * 100
+        return round(indice_percent, 2)
     
-        diff_clipped = min(diff_moyenne, 2*scale)
-        score = 100 * (1 - diff_clipped / (2*scale))
-        return float(np.clip(score, 0, 100))
 
 
 
@@ -185,7 +187,7 @@ if uploaded:
     
         # -------- Calculs --------
         val_rmse = rmse(mod_mois, obs_mois_vals)
-        pct_precision = precision_ecarts_percentiles(mod_mois, obs_mois_vals)
+        pct_precision = precision_overlap(mod_mois, obs_mois_vals)
     
         results_rmse.append({
             "Mois": mois,
@@ -207,6 +209,14 @@ if uploaded:
 
     st.subheader("Précision du modèle : RMSE et précision via écarts des percentiles")
     st.dataframe(df_rmse_styled, hide_index=True)
+
+    # -------- Précision globale annuelle --------
+    model_annee = model_values[:sum(heures_par_mois)]        # toutes les heures de l'année
+    obs_annee = np.concatenate(obs_mois_all)                # toutes les heures TRACC concaténées
+    
+    precision_annuelle = precision_overlap(model_annee, obs_annee)
+    st.subheader(f"Précision globale annuelle : {precision_annuelle} %")
+    st.subheader("")
 
     # -------- Seuils --------
     t_sup_thresholds = st.text_input("Seuils Tmax supérieur (°C, séparés par des virgules)", "25,30,35")
