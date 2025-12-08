@@ -226,18 +226,19 @@ if uploaded:
         .background_gradient(subset=["Précision (%)"], cmap="RdYlGn", vmin=vminP, vmax=vmaxP, axis=None)
         .format({"Précision (%)": "{:.2f}", "RMSE (°C)": "{:.2f}", "RMSE (heures)": "{:.2f}"})
     )
-    st.markdown(
+
+    st.subheader("Précision du modèle : RMSE (°C), RMSE (heures) et précision (%)")
+        st.markdown(
         """
         Percentiles : Une des 99 valeurs qui divisent les données de la TRACC ou du modèle 
         en 100 parts égales. Caractérise la distribution des valeurs.
+        
         **exemple** : Le P95 correspond à la température pour laquelle 95% pour des valeurs sont inférieures
         RMSE : Sert à quantifier les différences de températures
         qu'il existe entre les percentiles issues du modèle et celles de la TRACC
         """,
         unsafe_allow_html=True
     )
-    
-    st.subheader("Précision du modèle : RMSE (°C), RMSE (heures) et précision (%)")
     st.dataframe(df_rmse_styled, hide_index=True)
 
 
