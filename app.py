@@ -234,17 +234,18 @@ if uploaded:
         en 100 parts égales. Caractérise la distribution des valeurs
         
         **Exemple** : Le P95 correspond à la température pour laquelle 95% pour des valeurs sont inférieures
-
+        
+        <dic style="text-align: center ;">
         <a href="https://www.allaboutlean.com/wp-content/uploads/2020/01/Normal-Distribution-and-Percentiles.png"
         target="_blank">
         <img
-        src="https://www.allaboutlean.com/wp-content/uploads/2020/01/Normal-Distribution-and-Percentiles.png" width="300">
+        src="https://www.allaboutlean.com/wp-content/uploads/2020/01/Normal-Distribution-and-Percentiles.png" width="500">
         <a/>
         
         **RMSE** : Sert à quantifier les différences de températures
         qu'il existe entre les percentiles issues du modèle et celles de la TRACC
 
-        **Precision** : La méthode de la **distance de Bhattacharyya** est utilisé afin de comparer 
+        **Precision** : La méthode de la **distance de Bhattacharyya** est utilisée afin de comparer 
         la distribution de deux distributions de probabilités discrètes
         """,
         unsafe_allow_html=True
