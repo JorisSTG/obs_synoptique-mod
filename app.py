@@ -647,8 +647,8 @@ if uploaded:
 
     st.markdown(
         """
-        - Tn_jour et Tx_jour sont respectivement la températures minimale et maximal de la journée
-        - Ici, les températures Tn Tmoy et Tx sont décrite selon les percentiles pour chaque mois. Chaque mois compte 30 Tn,Tmoy et Tx. Ces valeurs sont classés selon leur valeur et redonné selon certains percentiles.
+        - Tn_jour et Tx_jour sont respectivement la température minimale et maximale de la journée
+        - Ici, les températures Tn_jour Tmoy_jour et Tx_jour sont décrites selon leurs percentiles pour chaque mois. Chaque mois compte 30 Tn,Tmoy et Tx.
         - **Exemple Tn** : La valeur du P25 de Tn du mois signifie que 25% des températures minimales journalières du mois sont inférieures à cette valeur.
         """,
         unsafe_allow_html=True
