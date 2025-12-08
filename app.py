@@ -391,7 +391,7 @@ if uploaded:
         ax.set_title(f"{mois} - Durée en heure par seuil de température")
         ax.set_xlabel("Température (°C)")
         ax.set_ylabel("Durée en heure")
-        ax.legend(fontsize='x-large')
+        ax.legend(fontsize='large')
         st.pyplot(fig)
         plt.close(fig)
 
@@ -442,7 +442,7 @@ if uploaded:
     ax.set_title("Année entière - Durée en heures par seuil de température")
     ax.set_xlabel("Température (°C)")
     ax.set_ylabel("Durée en heure")
-    ax.legend(fontsize='x-large')
+    ax.legend(fontsize='large')
     
     st.pyplot(fig)
     plt.close(fig)
@@ -466,7 +466,7 @@ if uploaded:
     ax.set_title("Année entière - Différence en heures par seuil de température")
     ax.set_xlabel("Température (°C)")
     ax.set_ylabel("Durée en heure")
-    ax.legend(fontsize='x-large')
+    ax.legend(fontsize='large')
     fig_hist_diff = fig
     st.pyplot(fig)
     plt.close(fig)
@@ -859,7 +859,7 @@ if uploaded:
     ax.set_xticklabels(mois_labels, rotation=45)
     ax.set_ylabel(f"Nombre de jours Tx_jour > {tx_seuil}°C")
     ax.set_title("Jours chauds par mois")
-    ax.legend(fontsize = "x-large")
+    ax.legend(fontsize = "large")
     fig_jourschaud=fig
     st.pyplot(fig)
     plt.close(fig)
@@ -872,7 +872,7 @@ if uploaded:
     ax.set_xticklabels(mois_labels, rotation=45)
     ax.set_ylabel(f"Nombre de nuits Tn_jour > {tn_seuil}°C")
     ax.set_title("Nuits tropicales par mois")
-    ax.legend(fontsize = "x-large")
+    ax.legend(fontsize = "large")
     fig_nuittrop=fig
     st.pyplot(fig)
     plt.close(fig)
@@ -1010,7 +1010,7 @@ if uploaded:
         ax.set_title(f"{titre} mensuel — Modèle vs Observations")
         ax.set_ylabel(f"{titre} (°C·jour)")
         ax.set_xlabel("Mois")
-        ax.legend(fontsize = "x-large")
+        ax.legend(fontsize = "large")
     
         # enregistrer la figure dans le dictionnaire
         figures[titre] = fig
