@@ -263,7 +263,7 @@ if uploaded:
 
     st.markdown(
         """
-        - La précision correspond à la proportion de surface commune entre les deux histogrammes horaires (Modèle et observation). La valeur est alors compris entre 0 et 100%
+        - La précision correspond à la proportion de surface commune entre les deux histogrammes horaires (Modèle et observation). La valeur est alors comprise entre 0 et 100%
         - **Exemple** : Les schémas ci-dessous servent d'exemple. La valeur de la précision correspond à l'air bleu foncé vis à vis de l'air normalisé des histogrammes
         
         <div style="text-align: center ;">
@@ -877,25 +877,21 @@ if uploaded:
     st.pyplot(fig)
     plt.close(fig)
     
-    # ---- Affichage des totaux ----
-    st.markdown(f"Total jours avec Tx_jour au dessus de **{tx_seuil}°C** dans les observations : {jours_chauds_total_Observations} / Modèle : {jours_chauds_total_modele}")
-    st.markdown(f"Total jours avec Tn_jour au dessus de **{tn_seuil}°C** dans les observations : {nuits_tropicales_total_Observations} / Modèle : {nuits_tropicales_total_modele}")
-
     # =============================
     # Comparaison annuelle jours chauds / nuits tropicales
     # =============================
     
     # Jours chauds
     if jours_chauds_total_Observations > jours_chauds_total_modele:
-        phrase_jours = f"Observations enregistre plus de jours chauds (Tx>{tx_seuil}°C) sur l'année ({jours_chauds_total_Observations}) que le modèle ({jours_chauds_total_modele})."
+        phrase_jours = f"les observations enregistrent plus de jours avec Tx>{tx_seuil}°C sur l'année ({jours_chauds_total_Observations}) que le modèle ({jours_chauds_total_modele})."
     else:
-        phrase_jours = f"Le modèle enregistre plus de jours chauds (Tx>{tx_seuil}°C) sur l'année ({jours_chauds_total_modele}) que Observations ({jours_chauds_total_Observations})."
+        phrase_jours = f"Le modèle enregistre plus de jours chauds avec Tx>{tx_seuil}°C sur l'année ({jours_chauds_total_modele}) que Observations ({jours_chauds_total_Observations})."
     
     # Nuits tropicales
     if nuits_tropicales_total_Observations > nuits_tropicales_total_modele:
-        phrase_nuits = f"Observations enregistre plus de nuits tropicales (Tn>{tn_seuil}°C) sur l'année ({nuits_tropicales_total_Observations}) que le modèle ({nuits_tropicales_total_modele})."
+        phrase_nuits = f"Les observations enregistrent plus de jours avec Tn>{tn_seuil}°C sur l'année ({nuits_tropicales_total_Observations}) que le modèle ({nuits_tropicales_total_modele})."
     else:
-        phrase_nuits = f"Le modèle enregistre plus de nuits tropicales (Tn>{tn_seuil}°C) sur l'année ({nuits_tropicales_total_modele}) que Observations ({nuits_tropicales_total_Observations})."
+        phrase_nuits = f"Le modèle enregistre plus de jours avec Tn>{tn_seuil}°C sur l'année ({nuits_tropicales_total_modele}) que Observations ({nuits_tropicales_total_Observations})."
     
     # Stocker dans st.session_state pour la page Résumé
     st.session_state["resume_chaud_nuit"] = [phrase_jours, phrase_nuits]
@@ -1014,9 +1010,9 @@ if uploaded:
         ax.set_title(f"{titre} mensuel — Modèle vs Observations")
         ax.set_ylabel(f"{titre} (°C·jour)")
         ax.set_xlabel("Mois")
-        ax.legend()
+        ax.legend(fontsize = "x-large")
     
-        # 🔥 enregistrer la figure dans le dictionnaire
+        # enregistrer la figure dans le dictionnaire
         figures[titre] = fig
     
         st.pyplot(fig)
