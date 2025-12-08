@@ -263,6 +263,8 @@ if uploaded:
 
     st.markdown(
         """
+        - La précision correspond à la proportion de surface commune entre les deux histogrammes horaires (Modèle et observation)
+        
         <div style="text-align: center ;">
         <a href="https://www.researchgate.net/profile/Md-Haidar-Sharif/publication/220804172/figure/fig3/AS:295583899242509@1447484101456/Bhattacharyya-distance-surrounds-altogether-for-one-dimensional-example-of-twosomes-of.png"
         target="_blank">
