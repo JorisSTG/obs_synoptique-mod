@@ -652,6 +652,7 @@ if uploaded:
         - **Exemple Tn_jour** : La valeur du P25 de Tn_jour du mois signifie que 25% des températures minimales journalières du mois sont inférieures à cette valeur.
         - **Exemple Tx_jour** : La valeur du P75 de Tx_jour du mois signifie que 75% des températures maximales journalières du mois sont inférieures à cette valeur.
         - Par conséquent, P99 des Tn_jour corresond au maximal des minimales journalières du mois
+        
         """,
         unsafe_allow_html=True
     )
@@ -868,14 +869,14 @@ if uploaded:
     ax.set_xticklabels(mois_labels, rotation=45)
     ax.set_ylabel(f"Nombre de nuits Tn_jour > {tn_seuil}°C")
     ax.set_title("Nuits tropicales par mois")
-    ax.legend()
+    ax.legend(fontsize = "x-large")
     fig_nuittrop=fig
     st.pyplot(fig)
     plt.close(fig)
     
     # ---- Affichage des totaux ----
-    st.markdown(f"**Total jours chauds Observations :** {jours_chauds_total_Observations}, **Modèle :** {jours_chauds_total_modele}")
-    st.markdown(f"**Total nuits tropicales Observations :** {nuits_tropicales_total_Observations}, **Modèle :** {nuits_tropicales_total_modele}")
+    st.markdown(f"Total jours avec Tx_jour au dessus de **{tx_seuil}°C** dans les observations : {jours_chauds_total_Observations} / Modèle : {jours_chauds_total_modele}")
+    st.markdown(f"Total jours avec Tn_jour au dessus de **{tn_seuil}°C** dans les observations : {nuits_tropicales_total_Observations} / Modèle : {nuits_tropicales_total_modele}")
 
     # =============================
     # Comparaison annuelle jours chauds / nuits tropicales
