@@ -231,12 +231,21 @@ if uploaded:
     st.markdown(
         """
         **Percentiles** : Une des 99 valeurs qui divisent les données de la TRACC ou du modèle 
-        en 100 parts égales. Caractérise la distribution des valeurs.
+        en 100 parts égales. Caractérise la distribution des valeurs
         
         **Exemple** : Le P95 correspond à la température pour laquelle 95% pour des valeurs sont inférieures
+
+        <a href="https://www.allaboutlean.com/wp-content/uploads/2020/01/Normal-Distribution-and-Percentiles.png"
+        target="_blank">
+        <img
+        src="https://www.allaboutlean.com/wp-content/uploads/2020/01/Normal-Distribution-and-Percentiles.png" width="300">
+        <a/>
         
         **RMSE** : Sert à quantifier les différences de températures
         qu'il existe entre les percentiles issues du modèle et celles de la TRACC
+
+        **Precision** : La méthode de la **distance de Bhattacharyya** est utilisé afin de comparer 
+        la distribution de deux distributions de probabilités discrètes
         """,
         unsafe_allow_html=True
     )
@@ -497,7 +506,7 @@ if uploaded:
         - Les valeurs tracées représentent les températures minimales et maximales **absolues** du mois (c’est-à-dire P0 et P100)
         - De ce fait, les températures du mois ne dépassent jamais les bornes définies par Tn_mois et Tx_mois.
         - La température moyenne (Tmoy_mois) correspond à la moyenne mensuelle calculée sur l’ensemble des pas de temps. 
-        - **Tmoy est différente de Tm=(Tn+Tx)/2**
+        - **Tmoy est différente de Tm = (Tn+Tx)/2**
         """,
         unsafe_allow_html=True
     )
@@ -590,19 +599,19 @@ if uploaded:
     
     # Générer les phrases
     if mean_Observations_Tx > mean_Model_Tx:
-        phrase_Tx = "En moyenne, la Observations est plus chaude que le modèle pour les températures maximales (Tx)."
+        phrase_Tx = "En moyenne, les observations sont plus chaudes que le modèle pour les températures maximales (Tx)."
     else:
-        phrase_Tx = "En moyenne, le modèle est plus chaud que Observations pour les températures maximales (Tx)."
+        phrase_Tx = "En moyenne, le modèle est plus chaud que les observations pour les températures maximales (Tx)."
     
     if mean_Observations_Tm > mean_Model_Tm:
-        phrase_Tm = "En moyenne, la Observations est plus chaude que le modèle pour les températures moyennes (Tmoy)."
+        phrase_Tm = "En moyenne, les observations sont plus chaudes que le modèle pour les températures moyennes (Tmoy)."
     else:
-        phrase_Tm = "En moyenne, le modèle est plus chaud que Observations pour les températures moyennes (Tmoy)."
+        phrase_Tm = "En moyenne, le modèle est plus chaud que les observations pour les températures moyennes (Tmoy)."
     
     if mean_Observations_Tn > mean_Model_Tn:
-        phrase_Tn = "En moyenne, la Observations est plus chaude que le modèle pour les températures minimales (Tn)."
+        phrase_Tn = "En moyenne, les observations sont plus chaudes que le modèle pour les températures minimales (Tn)."
     else:
-        phrase_Tn = "En moyenne, le modèle est plus chaud que Observations pour les températures minimales (Tn)."
+        phrase_Tn = "En moyenne, le modèle est plus chaud que les observations pour les températures minimales (Tn)."
     
     # Stocker dans st.session_state pour pouvoir les réutiliser dans la page Résumé
     st.session_state["resume_temp"] = [phrase_Tx, phrase_Tm, phrase_Tn]
@@ -617,6 +626,13 @@ if uploaded:
     #  SECTION: Tn / Tmoy / Tx journaliers
     # ============================
     st.subheader("Tn_jour / Tmoy_jour /  — CDF par mois et tableaux de percentiles")
+
+    st.markdown(
+        """
+        A
+        """,
+        unsafe_allow_html=True
+    )
     
     def daily_stats_from_hourly(hourly):
         """
