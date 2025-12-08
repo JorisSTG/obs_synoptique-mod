@@ -1114,19 +1114,19 @@ if uploaded:
     st.pyplot(fig)
     plt.close(fig)
 
-    # -------- Calcul des percentiles P1 à P100 --------
-    percentiles = np.arange(1, 101)
+    # -------- Calcul des percentiles P1 à P99 --------
+    percentiles = np.arange(1, 100)
     P_obs = np.percentile(obs_annee, percentiles)
     P_mod = np.percentile(model_annee, percentiles)
     
     # -------- Graphique PXX modèle vs TRACC avec croix et couleurs conditionnelles --------
-    fig, ax = plt.subplots(figsize=(4,4))
+    fig, ax = plt.subplots(figsize=(6,6))
     
     # Définir les couleurs selon qui est plus chaud
     colors = [couleur_Observations if obs > mod else couleur_modele for obs, mod in zip(P_obs, P_mod)]
     
     # Tracer les croix
-    ax.scatter(P_obs, P_mod, color=colors, marker='x', s=50, label='Percentiles')
+    ax.scatter(P_obs, P_mod, color=colors, marker='x', s=25, label='Percentiles')
     
     # Diagonale y=x
     min_val = min(min(P_obs), min(P_mod))
@@ -1138,14 +1138,24 @@ if uploaded:
     ax.set_ylim(min_val, max_val)
     ax.set_aspect('equal', 'box')
     
-    ax.set_xlabel("PXX TRACC (°C)")
+    ax.set_xlabel("PXX Observations (°C)")
     ax.set_ylabel("PXX Modèle (°C)")
     ax.set_title("Comparaison des percentiles annuels")
     ax.grid(True, linestyle=':', color='gray', alpha=0.5)
     ax.legend()
     st.pyplot(fig)
 
-    st.mark
+    st.markdown(
+        """
+        Ce diagramme quantiles-quantiles représente, pour chaque percentile, les valeurs de température issues des observations et celles issues du modèle. Chaque point correspond donc à un percentile allant de P1 à P99, avec des coordonnées .
+        Ce type de représentation permet de comparer directement les deux sources de données sur l’ensemble de la distribution
+        Les coordonnées de chaque percentile sont définies : (x;y) = (T°C observations ; T°C modèle)
+        Chaque croix represente les températures du même percentile (de P1 à P99). Ce diagramme permet alors de comparer les valeurs de températures des deux sources de donnée pour le même percentile.
+        **Interprétation** : L’écart par rapport à la diagonale permet ainsi de quantifier le biais du modèle sur l’ensemble de la distribution, 
+        en mettant en évidence d’éventuelles dérives spécifiques aux basses, moyennes ou hautes valeurs de température.
+        """,
+        unsafe_allow_html=True
+    )
 
 
     # -------- Graphiques CDF et percentiles --------
