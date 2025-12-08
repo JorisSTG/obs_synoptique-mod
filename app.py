@@ -386,8 +386,8 @@ if uploaded:
         
         # Création du plot
         fig, ax = plt.subplots(figsize=(14, 4))
-        ax.bar(df_plot["Temp_Num"] - 0.25, df_plot["Observations"], width=0.5, label=f"Observations {file_sel}", color=couleur_Observations)
-        ax.bar(df_plot["Temp_Num"] + 0.25, df_plot["Modèle"], width=0.5, label="Modèle", color=couleur_modele)
+        ax.bar(df_plot["Temp_Num"] - 0.25, df_plot["Observations"], width=0.4, label=f"Observations {file_sel}", color=couleur_Observations)
+        ax.bar(df_plot["Temp_Num"] + 0.25, df_plot["Modèle"], width=0.4, label="Modèle", color=couleur_modele)
         ax.set_title(f"{mois} - Durée en heure par seuil de température")
         ax.set_xlabel("Température (°C)")
         ax.set_ylabel("Durée en heure")
@@ -433,9 +433,9 @@ if uploaded:
     
     # Plot
     fig, ax = plt.subplots(figsize=(16, 5))
-    ax.bar(df_plot_year["Temp_Num"] - 0.25, df_plot_year["Observations"], width=0.5,
+    ax.bar(df_plot_year["Temp_Num"] - 0.25, df_plot_year["Observations"], width=0.4,
            label=f"Observations {file_sel}", color=couleur_Observations)
-    ax.bar(df_plot_year["Temp_Num"] + 0.25, df_plot_year["Modèle"], width=0.5,
+    ax.bar(df_plot_year["Temp_Num"] + 0.25, df_plot_year["Modèle"], width=0.4,
            label="Modèle", color=couleur_modele)
 
     fig_hist_year = fig
@@ -853,8 +853,8 @@ if uploaded:
     
     # ---- Diagramme jours chauds ----
     fig, ax = plt.subplots(figsize=(14, 4))
-    ax.bar(x - 0.25, jours_chauds_Observations, width=0.5, color=couleur_Observations, label="Observations")
-    ax.bar(x + 0.25, jours_chauds_modele, width=0.5, color=couleur_modele, label="Modèle")
+    ax.bar(x - 0.25, jours_chauds_Observations, width=0.4, color=couleur_Observations, label="Observations")
+    ax.bar(x + 0.25, jours_chauds_modele, width=0.4, color=couleur_modele, label="Modèle")
     ax.set_xticks(x)
     ax.set_xticklabels(mois_labels, rotation=45)
     ax.set_ylabel(f"Nombre de jours Tx_jour > {tx_seuil}°C")
@@ -866,8 +866,8 @@ if uploaded:
     
     # ---- Diagramme nuits tropicales ----
     fig, ax = plt.subplots(figsize=(14, 4))
-    ax.bar(x - 0.25, nuits_tropicales_Observations, width=0.5, color=couleur_Observations, label="Observations")
-    ax.bar(x + 0.25, nuits_tropicales_modele, width=0.5, color=couleur_modele, label="Modèle")
+    ax.bar(x - 0.25, nuits_tropicales_Observations, width=0.4, color=couleur_Observations, label="Observations")
+    ax.bar(x + 0.25, nuits_tropicales_modele, width=0.4, color=couleur_modele, label="Modèle")
     ax.set_xticks(x)
     ax.set_xticklabels(mois_labels, rotation=45)
     ax.set_ylabel(f"Nombre de nuits Tn_jour > {tn_seuil}°C")
