@@ -228,7 +228,7 @@ if uploaded:
     )
 
     st.subheader("Précision du modèle : RMSE (°C), RMSE (heures) et précision (%)")
-        st.markdown(
+    st.markdown(
         """
         Percentiles : Une des 99 valeurs qui divisent les données de la TRACC ou du modèle 
         en 100 parts égales. Caractérise la distribution des valeurs.
