@@ -1147,7 +1147,7 @@ if uploaded:
 
     st.markdown(
         """
-        - **Analyse** : Si les croix sont 
+        - **Analyse** : Si les croix sont sous la diagonale, alors le modèle est plus froid (et inversement)
         
         Ce diagramme quantiles-quantiles représente, pour chaque percentile, les valeurs de température issues des observations et celles issues du modèle.
         Ce type de représentation permet de comparer directement les deux sources de données sur l’ensemble de la distribution.
