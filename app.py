@@ -263,7 +263,7 @@ if uploaded:
 
     st.markdown(
         """
-        - La précision correspond à la proportion de surface commune entre les deux histogrammes horaires (Modèle et observation). La valeur est alors comprise entre 0 et 100%
+        - La précision correspond à la proportion de surface commune entre les deux histogrammes horaires (Modèle et observation) calculé selon l'indicde de **Bhattacharyya**. La valeur est alors comprise entre 0 et 100%
         - **Exemple** : Les schémas ci-dessous servent d'exemple. La valeur de la précision correspond à l'air bleu foncé vis à vis de l'air normalisé des histogrammes
         
         <div style="text-align: center ;">
