@@ -39,6 +39,8 @@ vmaxP = 100
 vminP = 50
 vmaxH = 100
 vminH = -100
+vmaxJ = 10
+vminJ = -10
 vmaxDJU = 150
 vminDJU = -150
 
@@ -925,37 +927,48 @@ if uploaded:
     mois_labels = [mois_noms[m] for m in range(1, 13)]
     x = np.arange(len(mois_labels))
 
-    # ============================
-    # TABLEAUX : valeurs par mois
-    # ============================
-    
-    st.subheader("Tableaux : jours chauds et nuits tropicales par mois")
-    
-    # Tableau jours chauds
+    # ===== TABLEAU JOURS CHAUDS =====
     df_jours_chauds = pd.DataFrame({
         "Mois": mois_labels,
         "Observations": jours_chauds_Observations,
         "Modèle": jours_chauds_modele,
     })
-    
     df_jours_chauds["Différence (Modèle - Obs)"] = df_jours_chauds["Modèle"] - df_jours_chauds["Observations"]
     
+
     st.markdown("Jours chauds par mois")
-    st.dataframe(df_jours_chauds, use_container_width=True, hide_index=True)
+    st.dataframe(
+        df_jours_chauds.style.background_gradient(
+            cmap="bwr",
+            subset=["Différence (Modèle - Obs)"],
+            vmin=vminJ,
+            vmax=vmaxJ
+        ),
+        hide_index=True,
+        use_container_width=True
+    )
     
     
-    # Tableau nuits tropicales
+    # ===== TABLEAU NUITS TROP =====
     df_nuits_trop = pd.DataFrame({
         "Mois": mois_labels,
         "Observations": nuits_tropicales_Observations,
         "Modèle": nuits_tropicales_modele,
     })
-    
     df_nuits_trop["Différence (Modèle - Obs)"] = df_nuits_trop["Modèle"] - df_nuits_trop["Observations"]
     
     st.markdown("Nuits tropicales par mois")
-    st.dataframe(df_nuits_trop, use_container_width=True, hide_index=True)
-    
+    st.dataframe(
+        df_nuits_trop.style.background_gradient(
+            cmap="bwr",
+            subset=["Différence (Modèle - Obs)"],
+            vmin=vminJ,
+            vmax=vmaxJ
+        ),
+        hide_index=True,
+        use_container_width=True
+    )
+
     # ---- Diagramme jours chauds ----
     fig, ax = plt.subplots(figsize=(14, 4))
     ax.bar(x - 0.25, jours_chauds_Observations, width=0.4, color=couleur_Observations, label="Observations")
