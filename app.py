@@ -845,43 +845,8 @@ if uploaded:
         "Obs_Tx": obs_counts_Tx,
         "Mod_Tx": mod_counts_Tx
     }).sort_values("Temp_Num")
-    
-    # ---------------- FIGURE Tn ----------------
-    fig, ax = plt.subplots(figsize=(15, 5))
-    ax.bar(df_hist["Temp_Num"] - 0.25, df_hist["Obs_Tn"], width=0.4,
-           label="Observations Tn", color=couleur_Observations)
-    ax.bar(df_hist["Temp_Num"] + 0.25, df_hist["Mod_Tn"], width=0.4,
-           label="Modèle Tn", color=couleur_modele)
-    
-    ax.set_title("Histogramme annuel – Nombre de jours par classe de Tn")
-    ax.set_xlabel("Température (°C)")
-    ax.set_ylabel("Nombre de jours")
-    ax.legend(fontsize='large')
-    st.pyplot(fig)
-    plt.close(fig)
-
-    pct_precision_Tn = precision_overlap(mod_counts_Tn, obs_counts_Tn)
-    st.write(f"Précision du modèle sur les Tn_jour : **{pct_precision_Tn} %**")
-    
-    # ---------------- FIGURE Tx ----------------
-    fig, ax = plt.subplots(figsize=(15, 5))
-    ax.bar(df_hist["Temp_Num"] - 0.25, df_hist["Obs_Tx"], width=0.4,
-           label="Observations Tx", color=couleur_Observations)
-    ax.bar(df_hist["Temp_Num"] + 0.25, df_hist["Mod_Tx"], width=0.4,
-           label="Modèle Tx", color=couleur_modele)
-    
-    ax.set_title("Histogramme annuel – Nombre de jours par classe de Tx")
-    ax.set_xlabel("Température (°C)")
-    ax.set_ylabel("Nombre de jours")
-    ax.legend(fontsize='large')
-    st.pyplot(fig)
-    plt.close(fig)
-
-    pct_precision_Tx = precision_overlap(mod_counts_Tx, obs_counts_Tx)
-    st.write(f"Précision du modèle sur les Tx_jour : **{pct_precision_Tx} %**")
-
-
-    # --- Fonction nombre de jours de vague (déjà corrigée) ---
+     
+    # --- Fonction nombre de jours de vague ---
     def nombre_jours_vague(T):
         T = np.array(T)
         n = len(T)
@@ -910,25 +875,20 @@ if uploaded:
                 i += 1
         return int(jours_vague.sum()), jours_vague
     
-    # ---------------- Exemple de données mensuelles ----------------
-    # Tn_jour_obs/mois et Tx_jour_obs/mois sont des listes de 12 éléments (1 par mois)
-    # Chaque élément = tableau des jours du mois
-    # Même structure pour le modèle
-    # Ici un exemple fictif pour montrer la structure :
-    Tn_jour_obs = [np.random.uniform(10, 20, size=30) for _ in range(12)]
-    Tx_jour_obs = [np.random.uniform(20, 35, size=30) for _ in range(12)]
-    Tn_jour_mod = [np.random.uniform(11, 21, size=30) for _ in range(12)]
-    Tx_jour_mod = [np.random.uniform(21, 36, size=30) for _ in range(12)]
-    
     # ---------------- Calcul Tm et nombre de jours de vague par mois ----------------
+    # Tn_jour_all, Tx_jour_all, Tn_jour_mod_all, Tx_jour_mod_all doivent être des listes 12 éléments (1 par mois)
     jours_vague_obs = []
     jours_vague_mod = []
     
     for mois in range(12):
-        Tm_obs = (Tx_jour_obs[mois] + Tn_jour_obs[mois])/2
-        Tm_mod = (Tx_jour_mod[mois] + Tn_jour_mod[mois])/2
+        # Calcul de Tm pour chaque jour
+        Tm_obs = (np.array(Tx_jour_all[mois]) + np.array(Tn_jour_all[mois])) / 2
+        Tm_mod = (np.array(Tx_jour_mod_all[mois]) + np.array(Tn_jour_mod_all[mois])) / 2
+        
+        # Nombre de jours de vague de chaleur
         nb_obs, _ = nombre_jours_vague(Tm_obs)
         nb_mod, _ = nombre_jours_vague(Tm_mod)
+        
         jours_vague_obs.append(nb_obs)
         jours_vague_mod.append(nb_mod)
     
@@ -944,7 +904,7 @@ if uploaded:
     # ---------------- Graphique bâtons ----------------
     fig, ax = plt.subplots(figsize=(12, 5))
     x = np.arange(1, 13)
-    ax.bar(x - 0.2, jours_vague_obs, width=0.4, label="Observations", color=couleur_Observations) 
+    ax.bar(x - 0.2, jours_vague_obs, width=0.4, label="Observations", color=couleur_Observations)
     ax.bar(x + 0.2, jours_vague_mod, width=0.4, label="Modèle", color=couleur_modele)
     ax.set_xlabel("Mois")
     ax.set_ylabel("Nombre de jours de vague de chaleur")
