@@ -894,7 +894,7 @@ if uploaded:
     
     # ---------------- Tableau ----------------
     df_vagues = pd.DataFrame({
-        "Mois": mois_noms,
+        "Mois": df_tstats["Mois"],
         "Observations": jours_vague_obs,
         "Modèle": jours_vague_mod
     })
