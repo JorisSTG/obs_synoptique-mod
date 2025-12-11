@@ -909,22 +909,33 @@ if uploaded:
                 i += 1
         return int(jours_vague.sum()), jours_vague
     
-    # ---------------- Calcul Tm et nombre de jours de vague par mois ----------------
-    # Tn_jour_all, Tx_jour_all, Tn_jour_mod_all, Tx_jour_mod_all doivent être des listes 12 éléments (1 par mois)
+    # ---------------- Calcul Tm et nombre de jours de vague sur l'année complète ----------------
+
+    # 1) Longueur de chaque mois
+    jours_par_mois = [len(Tx_jour_all[m]) for m in range(12)]
+    
+    # 2) Construire Tm sur toute l'année (continu)
+    Tm_obs_all = np.concatenate([
+        (np.array(Tx_jour_all[m]) + np.array(Tn_jour_all[m])) / 2 for m in range(12)
+    ])
+    
+    Tm_mod_all = np.concatenate([
+        (np.array(Tx_jour_mod_all[m]) + np.array(Tn_jour_mod_all[m])) / 2 for m in range(12)
+    ])
+    
+    # 3) Calculer les jours de vague en continu sur l'année
+    _, jours_vague_obs_all = nombre_jours_vague(Tm_obs_all)
+    _, jours_vague_mod_all = nombre_jours_vague(Tm_mod_all)
+    
+    # 4) Re-découper par mois
     jours_vague_obs = []
     jours_vague_mod = []
     
-    for mois in range(12):
-        # Calcul de Tm pour chaque jour
-        Tm_obs = (np.array(Tx_jour_all[mois]) + np.array(Tn_jour_all[mois])) / 2
-        Tm_mod = (np.array(Tx_jour_mod_all[mois]) + np.array(Tn_jour_mod_all[mois])) / 2
-        
-        # Nombre de jours de vague de chaleur
-        nb_obs, _ = nombre_jours_vague(Tm_obs)
-        nb_mod, _ = nombre_jours_vague(Tm_mod)
-        
-        jours_vague_obs.append(nb_obs)
-        jours_vague_mod.append(nb_mod)
+    idx = 0
+    for L in jours_par_mois:
+        jours_vague_obs.append(int(jours_vague_obs_all[idx:idx+L].sum()))
+        jours_vague_mod.append(int(jours_vague_mod_all[idx:idx+L].sum()))
+        idx += L
     
     # ---------------- Tableau ----------------
     df_vagues = pd.DataFrame({
