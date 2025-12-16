@@ -39,10 +39,6 @@ else:
 st.subheader("Précision du modèle : RMSE et percentiles")
 st.dataframe(st.session_state["df_rmse_styled"], hide_index=True)
 
-
-if mois_pas_precis:
-    st.markdown("**Mois avec une mauvaise précision :** " + ", ".join(mois_pas_precis))
-
 # --- Figures mensuelles Tn/Tmoy/Tx ---
 st.subheader("Évolution Tn/Tmoy/Tx")
 st.pyplot(st.session_state["fig_tn_tx_mois"])
