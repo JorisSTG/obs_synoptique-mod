@@ -410,14 +410,14 @@ if uploaded:
     st.subheader("Somme annuelle — Nombre d'heures supérieur au(x) seuil(s)")
     df_sup_year_styled = (
         df_sup_year.style
-        .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr", vmin=vminH, vmax=vmaxH, axis=None)
+        .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr", vmin=vminH*12, vmax=vmaxH*12, axis=None)
     )
     st.dataframe(df_sup_year_styled, hide_index=True)
     
     st.subheader("Somme annuelle — Nombre d'heures inférieur au(x) seuil(s)")
     df_inf_year_styled = (
         df_inf_year.style
-        .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr_r", vmin=vminH, vmax=vmaxH, axis=None)
+        .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr_r", vmin=vminH*12, vmax=vmaxH*12, axis=None)
     )
     st.dataframe(df_inf_year_styled, hide_index=True)
     
