@@ -282,27 +282,34 @@ if uploaded:
    
     st.subheader("")
 
-    # -------- Seuils --------
-    t_sup_thresholds = st.text_input("Seuils supérieurs (°C, séparer les seuils par des / )", "25/30/35")
-    t_inf_thresholds = st.text_input("Seuils inférieurs (°C, séparer les seuils par des / )", "-5/0/5")
+   # -------- Seuils --------
+    t_sup_thresholds = st.text_input("Seuils supérieurs (°C, séparer les seuils par des / )", "25/30")
+    t_inf_thresholds = st.text_input("Seuils inférieurs (°C, séparer les seuils par des / )", "0/5")
+    
     t_sup_thresholds_list = [int(float(x.strip())) for x in t_sup_thresholds.split("/")]
     t_inf_thresholds_list = [int(float(x.strip())) for x in t_inf_thresholds.split("/")]
     
     stats_sup = []
     stats_inf = []
     
+    # =====================================
+    # ====== CALCULS MENSUELS ==============
+    # =====================================
+    
     for mois_num, nb_heures in enumerate(heures_par_mois, start=1):
         mois = mois_noms[mois_num]
         idx0 = sum(heures_par_mois[:mois_num-1])
         idx1 = sum(heures_par_mois[:mois_num])
+    
         mod_mois = model_values[idx0:idx1]
         obs_mois = obs_mois_all[mois_num-1]
     
-        # Seuils supérieurs
+        # ----- Seuils supérieurs -----
         for seuil in t_sup_thresholds_list:
             heures_obs = np.sum(obs_mois > seuil)
             nb_heures_mod = np.sum(mod_mois > seuil)
-            ecart = nb_heures_mod - heures_obs  # Modèle - Observations
+            ecart = nb_heures_mod - heures_obs
+    
             stats_sup.append({
                 "Mois": mois,
                 "Seuil (°C)": f"{seuil}",
@@ -310,12 +317,13 @@ if uploaded:
                 "Heures Observations": heures_obs,
                 "Ecart (Modèle - Observations)": ecart
             })
-        
-        # Seuils inférieurs
+    
+        # ----- Seuils inférieurs -----
         for seuil in t_inf_thresholds_list:
             heures_obs = np.sum(obs_mois < seuil)
             nb_heures_mod = np.sum(mod_mois < seuil)
-            ecart = nb_heures_mod - heures_obs  # Modèle - Observations
+            ecart = nb_heures_mod - heures_obs
+    
             stats_inf.append({
                 "Mois": mois,
                 "Seuil (°C)": f"{seuil}",
@@ -324,32 +332,95 @@ if uploaded:
                 "Ecart (Modèle - Observations)": ecart
             })
     
-    # Création des DataFrames
+    # =====================================
+    # ========= DATAFRAMES =================
+    # =====================================
+    
     df_sup = pd.DataFrame(stats_sup)
     df_inf = pd.DataFrame(stats_inf)
     
-    # Conversion en int
     for df in [df_sup, df_inf]:
         df["Heures Modèle"] = df["Heures Modèle"].astype(int)
         df["Heures Observations"] = df["Heures Observations"].astype(int)
         df["Ecart (Modèle - Observations)"] = df["Ecart (Modèle - Observations)"].astype(int)
     
-    # Style : seuils supérieurs → rouge = plus chaud
+    # =====================================
+    # ========= AFFICHAGE MENSUEL ==========
+    # =====================================
+    
+    st.subheader("Nombre d'heures supérieur au(x) seuil(s)")
     df_sup_styled = (
         df_sup.style
         .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr", vmin=vminH, vmax=vmaxH, axis=None)
     )
-    st.subheader("Nombre d'heures supérieur au(x) seuil(s)")
     st.dataframe(df_sup_styled, hide_index=True)
     
-    # Style : seuils inférieurs → rouge = plus froid
-    # Pour inverser les couleurs, on peut juste inverser le cmap
+    st.subheader("Nombre d'heures inférieur au(x) seuil(s)")
     df_inf_styled = (
         df_inf.style
         .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr_r", vmin=vminH, vmax=vmaxH, axis=None)
     )
-    st.subheader("Nombre d'heures inférieur au(x) seuil(s)")
     st.dataframe(df_inf_styled, hide_index=True)
+    
+    # =====================================
+    # ======= SOMMES ANNUELLES =============
+    # =====================================
+    
+    obs_all = np.concatenate(obs_mois_all)
+    mod_all = np.array(model_values)
+    
+    annual_sup = []
+    annual_inf = []
+    
+    # ----- Supérieurs -----
+    for seuil in t_sup_thresholds_list:
+        heures_obs = np.sum(obs_all > seuil)
+        heures_mod = np.sum(mod_all > seuil)
+        ecart = heures_mod - heures_obs
+    
+        annual_sup.append({
+            "Période": "Année",
+            "Seuil (°C)": f"{seuil}",
+            "Heures Modèle": int(heures_mod),
+            "Heures Observations": int(heures_obs),
+            "Ecart (Modèle - Observations)": int(ecart)
+        })
+    
+    # ----- Inférieurs -----
+    for seuil in t_inf_thresholds_list:
+        heures_obs = np.sum(obs_all < seuil)
+        heures_mod = np.sum(mod_all < seuil)
+        ecart = heures_mod - heures_obs
+    
+        annual_inf.append({
+            "Période": "Année",
+            "Seuil (°C)": f"{seuil}",
+            "Heures Modèle": int(heures_mod),
+            "Heures Observations": int(heures_obs),
+            "Ecart (Modèle - Observations)": int(ecart)
+        })
+    
+    df_sup_year = pd.DataFrame(annual_sup)
+    df_inf_year = pd.DataFrame(annual_inf)
+    
+    # =====================================
+    # ======= AFFICHAGE ANNUEL =============
+    # =====================================
+    
+    st.subheader("Somme annuelle — Nombre d'heures supérieur au(x) seuil(s)")
+    df_sup_year_styled = (
+        df_sup_year.style
+        .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr", vmin=vminH, vmax=vmaxH, axis=None)
+    )
+    st.dataframe(df_sup_year_styled, hide_index=True)
+    
+    st.subheader("Somme annuelle — Nombre d'heures inférieur au(x) seuil(s)")
+    df_inf_year_styled = (
+        df_inf_year.style
+        .background_gradient(subset=["Ecart (Modèle - Observations)"], cmap="bwr_r", vmin=vminH, vmax=vmaxH, axis=None)
+    )
+    st.dataframe(df_inf_year_styled, hide_index=True)
+    
 
 
     # -------- Histogrammes par plage de température --------
