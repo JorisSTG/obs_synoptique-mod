@@ -11,7 +11,7 @@ st.title("Résumé des résultats")
 
 # Vérification
 missing = [k for k in 
-           ["fig_hist_year", "fig_hist_diff", "df_rmse", "df_rmse_styled",
+           ["fig_quantile_quantile", "fig_hist_year", "fig_hist_diff", "df_rmse", "df_rmse_styled",
             "fig_tn_tx_mois", "fig_jourschaud", "fig_nuittrop",
             "fig_cdf", "fig_DJC", "fig_DJF"]
            if k not in st.session_state]
@@ -22,6 +22,9 @@ if missing:
     st.stop()
 
 # --- Histogrammes annuels ---
+st.subheader("Diagramme quantile-quantile annuel")
+st.session_state["fig_quantile_quantile"]
+
 st.subheader("Histogrammes annuels")
 st.pyplot(st.session_state["fig_hist_year"])
 st.pyplot(st.session_state["fig_hist_diff"])
