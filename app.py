@@ -421,8 +421,6 @@ if uploaded:
     )
     st.dataframe(df_inf_year_styled, hide_index=True)
     
-
-
     # -------- Histogrammes par plage de température --------
     st.subheader(f"Histogrammes horaire : Modèle et observations {file_sel}")
     st.markdown(
