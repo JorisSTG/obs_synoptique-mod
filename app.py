@@ -282,7 +282,7 @@ if uploaded:
    
     st.subheader("")
 
-   # -------- Seuils --------
+    # -------- Seuils --------
     t_sup_thresholds = st.text_input("Seuils supérieurs (°C, séparer les seuils par des / )", "25/30")
     t_inf_thresholds = st.text_input("Seuils inférieurs (°C, séparer les seuils par des / )", "0/5")
     
@@ -1469,6 +1469,7 @@ if uploaded:
     ax.set_title("Comparaison des percentiles annuels")
     ax.grid(True, linestyle=':', color='gray', alpha=0.5)
     ax.legend()
+    fig_quantile_quantile=fig
     st.pyplot(fig)
 
     st.markdown(
@@ -1591,6 +1592,7 @@ if uploaded:
     )
    
     # ---- Stockage des figures dans session_state ----
+    st.session_state["fig_quantile_quantile"] = fig_quantile_quantile
     st.session_state["fig_hist_year"] = fig_hist_year
     st.session_state["fig_hist_diff"] = fig_hist_diff
     st.session_state["df_rmse"] = df_rmse
