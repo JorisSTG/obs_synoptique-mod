@@ -808,6 +808,58 @@ if uploaded:
         )
         st.dataframe(df_diff_styled, hide_index=True)
 
+    # =========================
+    # ===== CDF ANNUELLE ======
+    # =========================
+    st.subheader(f"CDF annuel Tn / Tx : Modèle et Observations {file_sel}")
+    # Concaténation annuelle
+    obs_tn_year = np.concatenate(Tn_jour_all)
+    obs_tm_year = np.concatenate(Tm_jour_all)
+    obs_tx_year = np.concatenate(Tx_jour_all)
+    
+    mod_tn_year = np.concatenate(Tn_jour_mod_all)
+    mod_tm_year = np.concatenate(Tm_jour_mod_all)
+    mod_tx_year = np.concatenate(Tx_jour_mod_all)
+    
+    # Percentiles annuels
+    obs_tn_cdf_year = np.percentile(obs_tn_year, pct_for_cdf)
+    mod_tn_cdf_year = np.percentile(mod_tn_year, pct_for_cdf)
+    
+    obs_tm_cdf_year = np.percentile(obs_tm_year, pct_for_cdf)
+    mod_tm_cdf_year = np.percentile(mod_tm_year, pct_for_cdf)
+    
+    obs_tx_cdf_year = np.percentile(obs_tx_year, pct_for_cdf)
+    mod_tx_cdf_year = np.percentile(mod_tx_year, pct_for_cdf)
+    
+    # Tracé
+    fig, ax = plt.subplots(figsize=(12, 5))
+    
+    colors = {
+        "Tn": "cyan",
+        "Tm": "white",
+        "Tx": "red"
+    }
+    
+    # Modèle
+    ax.plot(pct_for_cdf, mod_tx_cdf_year, "-",  lw=2, label="Modèle Tx",   color=colors["Tx"])
+    ax.plot(pct_for_cdf, mod_tm_cdf_year, "-",  lw=2, label="Modèle Tmoy", color=colors["Tm"])
+    ax.plot(pct_for_cdf, mod_tn_cdf_year, "-",  lw=2, label="Modèle Tn",   color=colors["Tn"])
+    
+    # Observations
+    ax.plot(pct_for_cdf, obs_tx_cdf_year, "--", lw=1.7, label="Observations Tx",   color=colors["Tx"])
+    ax.plot(pct_for_cdf, obs_tm_cdf_year, "--", lw=1.7, label="Observations Tmoy", color=colors["Tm"])
+    ax.plot(pct_for_cdf, obs_tn_cdf_year, "--", lw=1.7, label="Observations Tn",   color=colors["Tn"])
+    
+    ax.set_title(f"Année complète — CDF Tn_jour / Tmoy_jour / Tx_jour (Modèle vs Observations {file_sel})", color="white")
+    ax.set_xlabel("Percentile", color="white")
+    ax.set_ylabel("Température (°C)", color="white")
+    ax.tick_params(colors="white")
+    ax.legend(facecolor="black")
+    ax.set_facecolor("none")
+    
+    st.pyplot(fig)
+    plt.close(fig)
+
     # ---------------- Histogramme annuel Tn / Tx (Modèle vs Observations) ----------------
     st.subheader(f"Histogramme annuel Tn / Tx : Modèle et Observations {file_sel}")
     st.markdown(
