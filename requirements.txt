@@ -6,3 +6,4 @@ numpy
 matplotlib
 spicy
 seaborn
+h5py
