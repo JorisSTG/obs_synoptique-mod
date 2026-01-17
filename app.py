@@ -179,6 +179,7 @@ if uploaded:
     # -------- Boucle sur les mois --------
     results_rmse = []
     obs_mois_all = []
+    mod_mois_all = []
     start_idx_model = 0  # utile uniquement pour découper le modèle
     
     # Bins fixes pour tous les mois → meilleure cohérence RMSE_hours
@@ -192,6 +193,9 @@ if uploaded:
         mask_mois = (obs_time.month == mois_num)
         obs_mois_vals = obs_temp[mask_mois]  # toutes les heures du mois
         obs_mois_all.append(obs_mois_vals)
+
+        mod_mois_vals = obs_temp[mask_mois]  # toutes les heures du mois
+        mod_mois_all.append(mod_mois_vals)
     
         # -------- Modèle : découpe par bloc d'heures --------
         mod_mois = model_values[start_idx_model:start_idx_model + nb_heures]
@@ -259,7 +263,7 @@ if uploaded:
     # -------- Précision globale annuelle --------
     model_annee = model_values[:sum(heures_par_mois)]        # toutes les heures de l'année
     obs_annee = np.concatenate(obs_mois_all)                # toutes les heures TRACC concaténées
-    
+    mod_anne = np.concatenate(mod_mois_all) 
     precision_annuelle = precision_overlap(model_annee, obs_annee)
     st.subheader(f"Précision globale annuelle : {precision_annuelle} %")
 
