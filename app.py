@@ -798,12 +798,12 @@ if uploaded:
             continue
     
         # ---- préparer CDFs (percentiles des séries journalières) ----
-        obs_tn_cdf = np.percentile(obs_tn, pct_for_cdf)
-        mod_tn_cdf = np.percentile(mod_tn, pct_for_cdf)
-        obs_tm_cdf = np.percentile(obs_tm, pct_for_cdf)
-        mod_tm_cdf = np.percentile(mod_tm, pct_for_cdf)
-        obs_tx_cdf = np.percentile(obs_tx, pct_for_cdf)
-        mod_tx_cdf = np.percentile(mod_tx, pct_for_cdf)
+        obs_tn_cdf = np.percentile(obs_tn, pct_for_cdf, method="linear")
+        mod_tn_cdf = np.percentile(mod_tn, pct_for_cdf, method="linear")
+        obs_tm_cdf = np.percentile(obs_tm, pct_for_cdf, method="linear")
+        mod_tm_cdf = np.percentile(mod_tm, pct_for_cdf, method="linear")
+        obs_tx_cdf = np.percentile(obs_tx, pct_for_cdf, method="linear")
+        mod_tx_cdf = np.percentile(mod_tx, pct_for_cdf, method="linear")
     
         # ---- tracé : un seul graphique regroupant Tn / Tmoy / Tx ----
         fig, ax = plt.subplots(figsize=(12, 4))
@@ -895,14 +895,14 @@ if uploaded:
     mod_tx_year = np.concatenate(Tx_jour_mod_all)
     
     # Percentiles annuels
-    obs_tn_cdf_year = np.percentile(obs_tn_year, pct_for_cdf)
-    mod_tn_cdf_year = np.percentile(mod_tn_year, pct_for_cdf)
+    obs_tn_cdf_year = np.percentile(obs_tn_year, pct_for_cdf, method="linear")
+    mod_tn_cdf_year = np.percentile(mod_tn_year, pct_for_cdf, method="linear")
     
-    obs_tm_cdf_year = np.percentile(obs_tm_year, pct_for_cdf)
-    mod_tm_cdf_year = np.percentile(mod_tm_year, pct_for_cdf)
+    obs_tm_cdf_year = np.percentile(obs_tm_year, pct_for_cdf, method="linear")
+    mod_tm_cdf_year = np.percentile(mod_tm_year, pct_for_cdf, method="linear")
     
-    obs_tx_cdf_year = np.percentile(obs_tx_year, pct_for_cdf)
-    mod_tx_cdf_year = np.percentile(mod_tx_year, pct_for_cdf)
+    obs_tx_cdf_year = np.percentile(obs_tx_year, pct_for_cdf, method="linear")
+    mod_tx_cdf_year = np.percentile(mod_tx_year, pct_for_cdf, method="linear")
     
     # Tracé
     fig, ax = plt.subplots(figsize=(12, 5))
@@ -1406,8 +1406,8 @@ if uploaded:
             df_percentiles_all.append({
                 "Mois": mois,
                 "Percentile": f"P{p}",
-                "Obs": np.percentile(obs_vals, p),
-                "Mod": np.percentile(mod_vals, p)
+                "Obs": np.percentile(obs_vals, p, method="linear"),
+                "Mod": np.percentile(mod_vals, p, method="linear")
             })
 
     # Table ordonnée pour faciliter les tracés
@@ -1444,8 +1444,8 @@ if uploaded:
 
     # -------- Calcul des percentiles P1 à P99 --------
     percentiles = np.arange(1, 100)
-    P_obs = np.percentile(obs_annee, percentiles)
-    P_mod = np.percentile(model_annee, percentiles)
+    P_obs = np.percentile(obs_annee, percentiles, method="linear")
+    P_mod = np.percentile(model_annee, percentiles, method="linear")
     
     # -------- Graphique PXX modèle vs TRACC avec croix et couleurs conditionnelles --------
     fig, ax = plt.subplots(figsize=(6,6))
@@ -1498,8 +1498,8 @@ if uploaded:
         mois = mois_noms[mois_num]
         obs_mois = obs_mois_all[mois_num-1]
         mod_mois = model_values[sum(heures_par_mois[:mois_num-1]):sum(heures_par_mois[:mois_num])]
-        obs_percentiles_100 = np.percentile(obs_mois, np.linspace(0, 100, 100))
-        mod_percentiles_100 = np.percentile(mod_mois, np.linspace(0, 100, 100))
+        obs_percentiles_100 = np.percentile(obs_mois, np.linspace(0, 100, 100), method="linear")
+        mod_percentiles_100 = np.percentile(mod_mois, np.linspace(0, 100, 100), method="linear")
 
         fig, ax = plt.subplots(figsize=(12, 4))
         ax.plot(np.linspace(0, 100, 100), mod_percentiles_100, label="Modèle", color=couleur_modele)
@@ -1513,8 +1513,8 @@ if uploaded:
         st.pyplot(fig)
         plt.close(fig)
 
-        obs_p = np.percentile(obs_mois, percentiles_list)
-        mod_p = np.percentile(mod_mois, percentiles_list)
+        obs_p = np.percentile(obs_mois, percentiles_list, method="linear")
+        mod_p = np.percentile(mod_mois, percentiles_list, method="linear")
         df_p = pd.DataFrame({
             "Percentile": [f"P{p}" for p in percentiles_list],
             f"Observations {file_sel}": obs_p,
@@ -1540,8 +1540,8 @@ if uploaded:
     
     # Percentiles pour CDF (0–100)
     percentiles_cdf = np.linspace(0, 100, 100)
-    obs_percentiles_annual = np.percentile(obs_annual, percentiles_cdf)
-    mod_percentiles_annual = np.percentile(mod_annual, percentiles_cdf)
+    obs_percentiles_annual = np.percentile(obs_annual, percentiles_cdf, method="linear")
+    mod_percentiles_annual = np.percentile(mod_annual, percentiles_cdf, method="linear")
     
     # ----- Plot de la CDF annuelle -----
     fig, ax = plt.subplots(figsize=(12, 4))
@@ -1561,8 +1561,8 @@ if uploaded:
     plt.close(fig)
     
     # ------ Tableau des percentiles annuels ------
-    obs_p_annual = np.percentile(obs_annual, percentiles_list)
-    mod_p_annual = np.percentile(mod_annual, percentiles_list)
+    obs_p_annual = np.percentile(obs_annual, percentiles_list, method="linear")
+    mod_p_annual = np.percentile(mod_annual, percentiles_list, method="linear")
     
     df_p_annual = pd.DataFrame({
         "Percentile": [f"P{p}" for p in percentiles_list],
