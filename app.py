@@ -1229,8 +1229,8 @@ if uploaded:
     
     st.subheader("DJC (chauffage) et DJF (froid) journaliers — Observations vs Modèle")
     
-    T_base_chauffage = float(st.text_input("Base DJC (°C) — chauffage", "19"))
-    T_base_froid = float(st.text_input("Base DJF (°C) — refroidissement", "23"))
+    T_base_chauffage = float(st.text_input("Base DJC (°C) — chauffage", "18"))
+    T_base_froid = float(st.text_input("Base DJF (°C) — refroidissement", "26"))
     
     results_djc = []
     results_djf = []
